@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>解绳 · 越缠越有趣</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f2efe8;color:#343e3a;font-family:system-ui,-apple-system,"PingFang SC",sans-serif}#rope-game{max-width:660px;margin:auto;padding:26px 18px 22px}.eyebrow{font-size:11px;letter-spacing:3px;color:#698077}.heading{display:flex;align-items:center;justify-content:space-between;gap:12px}h1{font-size:27px;font-weight:550;margin:8px 0 4px;letter-spacing:2px}.edition{font-size:12px;border:1px solid #c6d2c9;border-radius:30px;padding:7px 12px;white-space:nowrap;color:#5c766a}.subtitle{font-size:13px;color:#7a8279;margin:8px 0 12px}.mode-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 4px 4px;font-size:13px;color:#60796c}.mode-row label{display:flex;align-items:center;gap:9px}.mode-row select{font:inherit;font-size:16px;min-height:44px;padding:6px 12px;border:1px solid #c6d2c9;border-radius:10px;background:#faf9f4;color:#475b51}.mode-row span{font-size:12px}.playfield{position:relative}canvas{display:block;width:100%;height:auto;aspect-ratio:1;touch-action:none;user-select:none}.statusbar{display:flex;justify-content:space-between;align-items:center;font-size:13px;gap:10px;margin:4px 8px 18px}.dot{width:7px;height:7px;background:#759588;display:inline-block;border-radius:50%;margin-right:7px}#count{font-variant-numeric:tabular-nums;color:#6e7a70}.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.actions button{flex:1;min-height:46px;border:1px solid #cdd3c8;border-radius:13px;background:#faf9f4;color:#475b51;font:inherit;font-size:14px;cursor:pointer}.actions button:first-child{background:#486b5a;color:#fff;border-color:#486b5a}button:disabled{opacity:.4;cursor:default}button:focus-visible{outline:3px solid #c3906b;outline-offset:3px}.help{margin:16px 4px 0;text-align:center;font-size:12px;color:#85897f;line-height:1.8}#toast{position:absolute;bottom:9%;left:50%;transform:translateX(-50%);background:#345b4c;color:white;padding:12px 19px;border-radius:40px;font-size:14px;white-space:nowrap;box-shadow:0 6px 22px #223b3420;display:none}#toast.show{display:block}@media(max-width:380px){#rope-game{padding:18px 10px}h1{font-size:24px}.edition{font-size:11px;padding:6px 9px}}
+.game-home{max-width:660px;margin:0 auto;padding:14px 18px 0;display:flex;justify-content:flex-end}.game-home a{font-size:12px;min-height:34px;display:flex;align-items:center;color:#5c766a;text-decoration:none;border:1px solid #c6d2c9;border-radius:30px;padding:5px 12px}.game-home a:focus-visible{outline:2px solid #486b5a;outline-offset:3px}#rope-game{padding-top:10px}</style></head><body>
+<nav class="game-home" aria-label="游戏导航"><a href="./index.html">← 返回菜单</a></nav><main id="rope-game"><div class="eyebrow">UNTANGLE / 慢慢解开</div><div class="heading"><h1>八根，来点难度。</h1><span class="edition">06 · 全新乱结</span></div><p class="subtitle">把绳头挪到空孔，让缠在一起的绳子各归各位。</p><div class="mode-row"><label for="rope-mode">绳子数量 <select id="rope-mode"><option value="3">3 根</option><option value="5">5 根</option><option value="8" selected>8 根</option></select></label><span id="slots">16 个绳头 · 8 个空孔</span></div><div class="playfield"><canvas id="board" width="1200" height="1200" aria-label="八条绳子的解缠棋盘，按住彩色绳头拖至灰色空孔。"></canvas><div id="toast" role="status">解开了！再来一局？</div></div><div class="statusbar"><span id="status" aria-live="polite"><i class="dot"></i>选一个绳头，挪到空孔</span><span id="count">0 步</span></div><div class="actions"><button id="reset">重玩本局</button><button id="shuffle">随机开局</button><button id="undo" disabled>撤销一步</button><button id="demo">看解开效果</button></div><p class="help">按住绳头直接拖动，靠近空孔松手吸附<br>完全解开的绳子会自动消失，腾出孔位</p></main>
+<script>
+(()=>{
+const root=document.getElementById('rope-game'),canvas=root.querySelector('#board'),baseCtx=canvas.getContext('2d');let ctx=baseCtx;
+const tubeCanvas=document.createElement('canvas'),knobCanvas=document.createElement('canvas');
+for(const layer of [tubeCanvas,knobCanvas]){layer.width=1200;layer.height=1200;layer.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none';layer.setAttribute('aria-hidden','true');canvas.parentNode.appendChild(layer)}
+const knobCtx=knobCanvas.getContext('2d');root.querySelector('#toast').style.zIndex=3;
+
+const status=root.querySelector('#status'),counter=root.querySelector('#count'),undoBtn=root.querySelector('#undo'),toast=root.querySelector('#toast');
+let ropeCount=8,N=48;const R=8.1,SEP=R*2+.7,HOLEZ=10;
+const colors=[['#087bd4','#41c5ff','#004c8d'],['#dd528e','#ffacd1','#963055'],['#dfa341','#ffe49b','#9d681f'],['#238c6b','#7ce2ae','#105344'],['#8854c9','#d3adff','#52327d'],['#e16440','#ffb994','#963e27'],['#24a7b5','#98f4f1','#17616b'],['#9aa42b','#edf394','#5b6518']];
+const holes=[];for(let x=140;x<=460;x+=80)holes.push({x,y:60});for(let y=140;y<=460;y+=80)holes.push({x:540,y});for(let x=460;x>=140;x-=80)holes.push({x,y:540});for(let y=460;y>=140;y-=80)holes.push({x:60,y});holes.push({x:140,y:140},{x:460,y:140},{x:460,y:460},{x:140,y:460});
+let generating=false,generationSerial=0,opening=null,guardStops=0,ropes=[],history=[],moves=0,selected=null,drag=null,pointer=null,hoverHole=-1,demoMode=false,won=false,quiet=0;
+const boardPath=new Path2D('M120 20H480Q500 20 500 40V100H560Q580 100 580 120V480Q580 500 560 500H500V560Q500 580 480 580H120Q100 580 100 560V500H40Q20 500 20 480V120Q20 100 40 100H100V40Q100 20 120 20Z M190 100H410Q420 100 420 110V170Q420 180 430 180H490Q500 180 500 190V410Q500 420 490 420H430Q420 420 420 430V490Q420 500 410 500H190Q180 500 180 490V430Q180 420 170 420H110Q100 420 100 410V190Q100 180 110 180H170Q180 180 180 170V110Q180 100 190 100Z');
+const bg=document.createElement('canvas');bg.width=1200;bg.height=1200;const b=bg.getContext('2d');b.scale(2,2);
+let seed=123;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+b.fillStyle='#eeeae1';b.fillRect(0,0,600,600);for(let i=0;i<420;i++){const x=rand()*600;b.strokeStyle=`rgba(130,119,93,${rand()*.045})`;b.lineWidth=rand()*1.2;b.beginPath();b.moveTo(x,0);b.bezierCurveTo(x+rand()*4,200,x-rand()*4,400,x,600);b.stroke()}
+b.save();b.shadowColor='#253f3d65';b.shadowBlur=10;b.shadowOffsetY=5;b.fillStyle='#93afaa';b.fill(boardPath,'evenodd');b.restore();b.save();b.clip(boardPath,'evenodd');b.fillStyle='#bdc7bb';b.fillRect(0,0,600,600);
+for(let y=0;y<600;y+=22)for(let x=0;x<600;x+=25){const xx=x+(y%44?12:0),j=()=>rand()*7-3.5;b.beginPath();b.moveTo(xx+j(),y+j());b.lineTo(xx+22+j(),y+j());b.lineTo(xx+23+j(),y+19+j());b.lineTo(xx+j(),y+20+j());b.closePath();b.fillStyle=['#94b1aa','#a8c0b7','#7e9f9a','#c3cfc2','#b0c1b5'][Math.floor(rand()*5)];b.fill();b.strokeStyle='#e0dfce';b.lineWidth=1.3;b.stroke()}b.restore();b.strokeStyle='#385957';b.lineWidth=2;b.stroke(boardPath);
+function project(p){return{x:p.x,y:p.y-p.z*.52}}
+function point(x,y,z=10){return{x,y,z,ox:x,oy:y,oz:z}}
+function snapshot(){return{count:ropeCount,ropes:ropes.map(r=>({ends:r.ends.slice(),rest:r.rest,cleared:!!r.cleared,p:r.p.map(p=>({...p}))})),moves,demoMode}}
+function restore(s){if(s.count){ropeCount=s.count;N=ropeCount===3?36:ropeCount===5?40:48}ropes=s.ropes.map((r,i)=>({...r,ends:r.ends.slice(),p:r.p.map(p=>({...p})),color:colors[i],freeSince:null}));moves=s.moves;demoMode=s.demoMode;selected=null;drag=null;pointer=null;won=false;quiet=0;toast.className='';updateSlots();update()}
+function shuffled(values){const result=values.slice();for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]]}return result}
+function relaxGenerated(list){
+// Initial arrangement has no prior topology to preserve. Separate capsules before
+// entering the live solver, which subsequently preserves continuous motion.
+for(let pass=0;pass<24;pass++){
+for(const [A,B]of nearbyPairs(list,null,true)){const i=A.i,j=B.i;collide(A.a,A.b,B.a,B.b,i?1:0,i+1===N?0:1,j?1:0,j+1===N?0:1)}
+for(const r of list)for(let i=1;i<N;i++){const p=r.p[i];p.x=Math.max(30,Math.min(570,p.x));p.y=Math.max(30,Math.min(570,p.y));p.z=Math.max(R,p.z)}
+}
+for(const r of list){let length=0;for(let i=0;i<=N;i++){const p=r.p[i];p.ox=p.x;p.oy=p.y;p.oz=p.z;if(i)length+=Math.hypot(p.x-r.p[i-1].x,p.y-r.p[i-1].y,p.z-r.p[i-1].z)}r.rest=length/N}
+}
+function makeOpening(){
+// Every hole is eligible. Pairing is independently shuffled, with no rows,
+// opposite-side constraint, shared winding axis, or repeated spiral template.
+const occupied=shuffled(holes.map((_,i)=>i)).slice(0,ropeCount*2),pairs=shuffled(occupied);
+const hubCount=2+Math.floor(Math.random()*3),cx=270+Math.random()*60,cy=270+Math.random()*60,spread=42+Math.random()*32;
+const hubs=Array.from({length:hubCount},()=>({x:cx+(Math.random()*2-1)*spread,y:cy+(Math.random()*2-1)*spread}));
+const result=[],routes=[];
+function catmull(points,t){const i=Math.min(points.length-2,Math.floor(t)),u=t-i,a=points[Math.max(0,i-1)],b=points[i],c=points[i+1],d=points[Math.min(points.length-1,i+2)],q={};for(const axis of ['x','y','z'])q[axis]=.5*(2*b[axis]+(-a[axis]+c[axis])*u+(2*a[axis]-5*b[axis]+4*c[axis]-d[axis])*u*u+(-a[axis]+3*b[axis]-3*c[axis]+d[axis])*u*u*u);return q}
+for(let k=0;k<ropeCount;k++){
+const ends=[pairs[k*2],pairs[k*2+1]],a=holes[ends[0]],b=holes[ends[1]],order=shuffled(hubs);
+// Independently ordered visits create crossings and reversals. Depth at each
+// visit is random too, so one rope can pass both above and below another.
+if(order.length===2||Math.random()<.6)order.splice(1+Math.floor(Math.random()*order.length),0,hubs[Math.floor(Math.random()*hubs.length)]);
+const controls=order.map(h=>({x:h.x+(Math.random()*2-1)*22,y:h.y+(Math.random()*2-1)*22,z:18+Math.random()*112}));
+routes.push(controls.map(p=>[Math.round(p.x),Math.round(p.y),Math.round(p.z)]));
+const pts=[];for(let i=0;i<=N;i++){const t=i/N;let q;
+if(t<.20){const u=t/.20,c=controls[0];q={x:a.x+(c.x-a.x)*u,y:a.y-HOLEZ*.52+(c.y-a.y+HOLEZ*.52)*u,z:HOLEZ+(c.z-HOLEZ)*u}}
+else if(t>.80){const u=(t-.80)/.20,c=controls[controls.length-1];q={x:c.x+(b.x-c.x)*u,y:c.y+(b.y-HOLEZ*.52-c.y)*u,z:c.z+(HOLEZ-c.z)*u}}
+else q=catmull(controls,(t-.20)/.60*(controls.length-1));
+q.y+=q.z*.52;pts.push(point(Math.max(30,Math.min(570,q.x)),Math.max(30,Math.min(570,q.y)),Math.max(R,q.z)))}
+const lengths=[0];for(let i=1;i<pts.length;i++)lengths.push(lengths[i-1]+Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y,pts[i].z-pts[i-1].z));const total=lengths[lengths.length-1],uniform=[];let segment=0;
+for(let i=0;i<=N;i++){const distance=total*i/N;while(segment<pts.length-2&&lengths[segment+1]<distance)segment++;const u=(distance-lengths[segment])/(lengths[segment+1]-lengths[segment]||1),a=pts[segment],b=pts[segment+1];uniform.push(point(a.x+(b.x-a.x)*u,a.y+(b.y-a.y)*u,a.z+(b.z-a.z)*u))}
+result.push({p:uniform,ends,rest:total/N,color:colors[k],cleared:false,freeSince:null});
+}
+relaxGenerated(result);
+return{count:ropeCount,ropes:result,moves:0,demoMode:false,word:{type:'random-routes',hubs:hubCount,routes}};
+}
+function updateSlots(){const cleared=ropes.filter(r=>r.cleared).length,active=ropeCount-cleared;root.querySelector('#slots').textContent=cleared?'已解开 '+cleared+'/'+ropeCount+' · '+(24-active*2)+' 个空孔':(active*2)+' 个绳头 · '+(24-active*2)+' 个空孔';canvas.dataset.cleared=String(cleared)}
+function updateMode(){
+root.querySelector('h1').textContent=ropeCount===3?'三根，刚刚好。':ropeCount===5?'五根，有点意思。':'八根，来点难度。';
+root.querySelector('.edition').textContent='06 · '+ropeCount+' 根乱结';updateSlots();canvas.setAttribute('aria-label',ropeCount+'根绳子的解缠棋盘，按住彩色绳头拖至灰色空孔。');
+}
+function beginOpening(){
+const serial=++generationSerial;generating=true;drag=null;pointer=null;selected=null;
+for(const id of ['reset','shuffle','undo','demo','rope-mode'])root.querySelector('#'+id).disabled=true;
+update('正在生成新的孔位、配对和绳结…');
+function batch(){if(serial!==generationSerial)return;
+for(let attempt=0;attempt<4;attempt++){
+const candidate=makeOpening();ropes=candidate.ropes;
+if(intersections()<ropeCount*3||minimumSeparation(ropes)<=5||ropeCrossings(false).some(n=>n===0))continue;
+for(let frame=0;frame<12;frame++)physics();
+if(intersections()<ropeCount*2||minimumSeparation(ropes)<=2.49||ropeCrossings(false).some(n=>n===0))continue;
+opening=candidate;history=[];guardStops=0;generating=false;
+for(const id of ['reset','shuffle','demo','rope-mode'])root.querySelector('#'+id).disabled=false;
+updateMode();restore(opening);canvas.dataset.opening=JSON.stringify({word:candidate.word,ends:ropes.map(r=>r.ends)});canvas.dataset.initialCrossings=String(intersections());update('新棋局已就绪 · 按住绳头拖动');return;
+}
+// Continue in short batches; never fall back to a fixed or unvalidated layout.
+setTimeout(batch,0);
+}
+batch();
+}
+function reset(){if(generating)return;if(!opening){beginOpening(true);return}history=[];guardStops=0;restore(opening)}
+function update(message){counter.textContent=moves+' 步';undoBtn.disabled=generating||!history.length;status.innerHTML='<i class="dot"></i>'+(message||(drag?'拖到亮起的空孔，再松手':'按住绳头，拖到空孔'))}
+function fixed(k,i){return i===0||i===N}
+function targets(k){let r=ropes[k];for(let end=0;end<2;end++){const p=r.p[end?N:0],h=holes[r.ends[end]];let target=drag&&drag.k===k&&drag.end===end?drag.target:{x:h.x,y:h.y,z:HOLEZ};let dx=target.x-p.x,dy=target.y-p.y,dz=target.z-p.z,d=Math.hypot(dx,dy,dz),f=Math.min(1,4/(d||1));p.x+=dx*f;p.y+=dy*f;p.z+=dz*f;p.ox=p.x;p.oy=p.y;p.oz=p.z}}
+function collide(a,b,c,d,wa,wb,wc,wd){
+const ux=b.x-a.x,uy=b.y-a.y,uz=b.z-a.z,vx=d.x-c.x,vy=d.y-c.y,vz=d.z-c.z,wx=a.x-c.x,wy=a.y-c.y,wz=a.z-c.z;
+const A=ux*ux+uy*uy+uz*uz,B=ux*vx+uy*vy+uz*vz,C=vx*vx+vy*vy+vz*vz,D=ux*wx+uy*wy+uz*wz,E=vx*wx+vy*wy+vz*wz,den=A*C-B*B;
+let s=den>1e-8?Math.max(0,Math.min(1,(B*E-C*D)/den)):0,t=C>1e-8?(B*s+E)/C:0;if(t<0){t=0;s=Math.max(0,Math.min(1,-D/(A||1)))}else if(t>1){t=1;s=Math.max(0,Math.min(1,(B-D)/(A||1)))}
+let dx=wx+s*ux-t*vx,dy=wy+s*uy-t*vy,dz=wz+s*uz-t*vz,dist=Math.hypot(dx,dy,dz);if(dist>=SEP)return;if(dist<.001){dz=1;dist=1}
+let u=1-s,v=1-t,inv=wa*u*u+wb*s*s+wc*v*v+wd*t*t;if(!inv)return;let f=(SEP-dist)/dist/inv*.87;dx*=f;dy*=f;dz*=f;
+a.x+=dx*wa*u;a.y+=dy*wa*u;a.z+=dz*wa*u;b.x+=dx*wb*s;b.y+=dy*wb*s;b.z+=dz*wb*s;c.x-=dx*wc*v;c.y-=dy*wc*v;c.z-=dz*wc*v;d.x-=dx*wd*t;d.y-=dy*wd*t;d.z-=dz*wd*t;
+}
+// Robust closest distance between finite 3-D segments (including parallel ones).
+function segmentDistance(a,b,c,d){
+const u=[b.x-a.x,b.y-a.y,b.z-a.z],v=[d.x-c.x,d.y-c.y,d.z-c.z],w=[a.x-c.x,a.y-c.y,a.z-c.z],dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],clamp=x=>Math.max(0,Math.min(1,x));
+const A=dot(u,u),B=dot(u,v),C=dot(v,v),D=dot(u,w),E=dot(v,w);let t=0,q=0;
+if(A<1e-10&&C<1e-10)return Math.hypot(...w);
+if(A<1e-10)q=clamp(E/C);else if(C<1e-10)t=clamp(-D/A);else{const det=A*C-B*B;t=det>1e-10?clamp((B*E-C*D)/det):0;q=(B*t+E)/C;if(q<0){q=0;t=clamp(-D/A)}else if(q>1){q=1;t=clamp((B-D)/A)}}
+return Math.hypot(w[0]+t*u[0]-q*v[0],w[1]+t*u[1]-q*v[1],w[2]+t*u[2]-q*v[2]);
+}
+function minimumSeparation(list){let min=Infinity;for(let k=0;k<list.length;k++)for(let l=k+1;l<list.length;l++)for(let i=0;i<N;i++)for(let j=0;j<N;j++)min=Math.min(min,segmentDistance(list[k].p[i],list[k].p[i+1],list[l].p[j],list[l].p[j+1]));return min}
+function pairMotionFraction(old,next,limit=1){
+const MARGIN=2.5,lerp=(a,b,t)=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,z:a.z+(b.z-a.z)*t}),move=(a,b)=>Math.hypot(b.x-a.x,b.y-a.y,b.z-a.z);
+for(const axis of ['x','y','z']){const loA=Math.min(old[0][axis],old[1][axis],next[0][axis],next[1][axis]),hiA=Math.max(old[0][axis],old[1][axis],next[0][axis],next[1][axis]),loB=Math.min(old[2][axis],old[3][axis],next[2][axis],next[3][axis]),hiB=Math.max(old[2][axis],old[3][axis],next[2][axis],next[3][axis]);if(hiA+MARGIN<loB||hiB+MARGIN<loA)return limit}
+const speed=Math.max(move(old[0],next[0]),move(old[1],next[1]))+Math.max(move(old[2],next[2]),move(old[3],next[3]));if(speed<1e-8)return limit;
+let t=0;for(let step=0;step<40;step++){
+const q=old.map((p,n)=>lerp(p,next[n],t)),distance=segmentDistance(...q),advance=(distance-MARGIN)/speed*.90;
+if(advance<1e-5)return Math.max(0,t-1e-4);
+if(t+advance>=limit)return limit;t+=advance;
+}return Math.max(0,t-1e-4);
+}
+function nearbyPairs(list,before=null,includeSelf=false){
+const segments=[],grid=new Map(),pairs=[],seen=new Set(),cell=48,pad=SEP*.55;
+for(let k=0;k<list.length;k++)for(let i=0;i<N;i++){
+if(list[k].cleared)continue;const a=list[k].p[i],b=list[k].p[i+1],oldA=before?before[k][i]:a,oldB=before?before[k][i+1]:b,id=segments.length;
+segments.push({k,i,a,b});const x0=Math.floor((Math.min(a.x,b.x,oldA.x,oldB.x)-pad)/cell),x1=Math.floor((Math.max(a.x,b.x,oldA.x,oldB.x)+pad)/cell),y0=Math.floor((Math.min(a.y,b.y,oldA.y,oldB.y)-pad)/cell),y1=Math.floor((Math.max(a.y,b.y,oldA.y,oldB.y)+pad)/cell);
+for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){const key=x+','+y;let bucket=grid.get(key);if(!bucket){bucket=[];grid.set(key,bucket)}
+for(const other of bucket){const old=segments[other];if(old.k===k&&(!includeSelf||Math.abs(old.i-i)<Math.max(3,Math.ceil(SEP*1.6/list[k].rest))))continue;const code=other*10000+id;if(seen.has(code))continue;seen.add(code);pairs.push([old,segments[id]])}bucket.push(id)}
+}return pairs;
+}
+function preserveLocalContacts(before,after){
+for(let pass=0;pass<4;pass++){
+let changed=false;for(const [A,B]of nearbyPairs(after,before)){const k=A.k,i=A.i,l=B.k,j=B.i;
+const old=[before[k][i],before[k][i+1],before[l][j],before[l][j+1]],next=[after[k].p[i],after[k].p[i+1],after[l].p[j],after[l].p[j+1]],fraction=pairMotionFraction(old,next);
+if(fraction>=1)continue;changed=true;guardStops++;
+for(let n=0;n<4;n++){const p=next[n],q=old[n];p.x=q.x+(p.x-q.x)*fraction;p.y=q.y+(p.y-q.y)*fraction;p.z=q.z+(p.z-q.z)*fraction;p.ox=p.x;p.oy=p.y;p.oz=p.z}
+}if(!changed)break;
+}
+}
+function motionFraction(before,after){
+let fraction=1;
+for(const [A,B]of nearbyPairs(after,before)){const k=A.k,i=A.i,l=B.k,j=B.i;
+const old=[before[k][i],before[k][i+1],before[l][j],before[l][j+1]],next=[after[k].p[i],after[k].p[i+1],after[l].p[j],after[l].p[j+1]];
+fraction=Math.min(fraction,pairMotionFraction(old,next,fraction));
+}
+return fraction;
+}
+function physics(){
+const previous=ropes.map(r=>r.p.map(p=>({x:p.x,y:p.y,z:p.z})));
+for(let k=0;k<ropeCount;k++){
+const r=ropes[k];if(r.cleared)continue;const a=r.p[0],b=r.p[N];
+// Mild elastic tension removes surplus slack; obstacles still determine the path.
+let pathLength=0;for(let i=1;i<=N;i++)pathLength+=Math.hypot(r.p[i].x-r.p[i-1].x,r.p[i].y-r.p[i-1].y,r.p[i].z-r.p[i-1].z);
+const goal=Math.max(12,Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z),pathLength-12)/N*.999;
+r.rest+=(goal-r.rest)*.08;
+for(let i=1;i<N;i++){const p=r.p[i],x=p.x,y=p.y,z=p.z;p.x+=(p.x-p.ox)*.67;p.y+=(p.y-p.oy)*.67;p.z+=(p.z-p.oz)*.67-.09;
+// Tighten locally along the existing path, without pulling nodes through a knot.
+p.ox=x;p.oy=y;p.oz=z}
+targets(k);
+}
+const solverIters=drag?10:6;for(let iter=0;iter<solverIters;iter++){
+for(let k=0;k<ropeCount;k++){
+const r=ropes[k];if(r.cleared)continue;
+if(iter<5)targets(k);
+// A small bend constraint damps tiny zigzags, before collision resolution.
+if(iter<4)for(let i=1;i<N;i++){const p=r.p[i],a=r.p[i-1],b=r.p[i+1];p.x+=((a.x+b.x)*.5-p.x)*.045;p.y+=((a.y+b.y)*.5-p.y)*.045;p.z+=((a.z+b.z)*.5-p.z)*.045}
+for(let n=0;n<N;n++){const i=iter%2?N-1-n:n,a=r.p[i],b=r.p[i+1],dx=b.x-a.x,dy=b.y-a.y,dz=b.z-a.z,d=Math.hypot(dx,dy,dz),wa=i===0?0:1,wb=i+1===N?0:1;
+if(d<=r.rest)continue;const f=(d-r.rest)/(d||1)/(wa+wb)*.97;a.x+=dx*f*wa;a.y+=dy*f*wa;a.z+=dz*f*wa;b.x-=dx*f*wb;b.y-=dy*f*wb;b.z-=dz*f*wb}
+}
+for(const [A,B]of nearbyPairs(ropes,null,true)){const i=A.i,j=B.i;collide(A.a,A.b,B.a,B.b,i?1:0,i+1===N?0:1,j?1:0,j+1===N?0:1)}
+for(let k=0;k<ropeCount;k++)for(let i=1;i<N;i++){if(ropes[k].cleared)continue;const p=ropes[k].p[i];p.z=Math.max(R,p.z);p.x=Math.max(27,Math.min(573,p.x));p.y=Math.max(27,Math.min(573,p.y))}
+}
+preserveLocalContacts(previous,ropes);
+const safe=motionFraction(previous,ropes);
+if(safe<1){guardStops++;for(let k=0;k<ropeCount;k++)for(let i=0;i<=N;i++){const p=ropes[k].p[i],old=previous[k][i];p.x=old.x+(p.x-old.x)*safe;p.y=old.y+(p.y-old.y)*safe;p.z=old.z+(p.z-old.z)*safe;p.ox=p.x;p.oy=p.y;p.oz=p.z}}
+
+}
+function holeDraw(h,occupied,idx){let y=h.y-4;ctx.save();ctx.shadowColor='#302c3440';ctx.shadowBlur=4;ctx.shadowOffsetY=2;ctx.beginPath();ctx.arc(h.x,y,31,0,Math.PI*2);ctx.fillStyle='#887a64';ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#d7ceb8';ctx.lineWidth=3;ctx.stroke();const g=ctx.createRadialGradient(h.x-9,y-10,2,h.x,y,27);g.addColorStop(0,'#6f7771');g.addColorStop(1,'#343f3d');ctx.fillStyle=g;ctx.beginPath();ctx.arc(h.x,y,26,0,Math.PI*2);ctx.fill();if(occupied<0){ctx.save();ctx.beginPath();ctx.arc(h.x,y,25,0,Math.PI*2);ctx.clip();ctx.strokeStyle='#a2aaa08a';ctx.lineWidth=1.7;for(let i=0;i<6;i++){const t=i*1.047;ctx.beginPath();ctx.moveTo(h.x+Math.cos(t)*28,y+Math.sin(t)*28);ctx.lineTo(h.x+Math.cos(t+.2)*13,y+Math.sin(t+.2)*13);ctx.lineTo(h.x+Math.cos(t+1)*6,y+Math.sin(t+1)*6);ctx.stroke()}ctx.restore();if(selected){ctx.strokeStyle=hoverHole===idx?'#faf6c7':'#e7f0d280';ctx.lineWidth=hoverHole===idx?4:2;ctx.setLineDash(hoverHole===idx?[]:[3,5]);ctx.beginPath();ctx.arc(h.x,y,29,0,Math.PI*2);ctx.stroke();ctx.setLineDash([])}}ctx.restore()}
+function ropeStroke(a,b,color,width){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
+function draw(){ctx=baseCtx;ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,600,600);ctx.drawImage(bg,0,0,600,600);
+const occ=holes.map((h,i)=>ropes.findIndex(r=>!r.cleared&&r.ends.includes(i)));holes.forEach((h,i)=>holeDraw(h,occ[i],i));
+// One continuous shadow per rope, with no accumulation at node boundaries.
+for(const r of ropes){if(r.cleared)continue;ctx.save();ctx.beginPath();r.p.forEach((p,i)=>{if(i)ctx.lineTo(p.x+3,p.y+5);else ctx.moveTo(p.x+3,p.y+5)});ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#243a3a18';ctx.lineWidth=19;ctx.shadowColor='#243a3a18';ctx.shadowBlur=4;ctx.stroke();ctx.restore()}
+if(tubeRenderer)tubeRenderer();else{for(let k=0;k<ropeCount;k++){if(ropes[k].cleared)continue;const pts=ropes[k].p.map(project);for(const [width,color] of [[R*2+2,colors[k][2]],[R*2-1,colors[k][0]],[R*.5,colors[k][1]]]){ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.lineWidth=width;ctx.strokeStyle=color;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke()}}}
+ctx=knobCtx;ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,600,600);
+for(let k=0;k<ropeCount;k++)for(let end=0;end<2;end++){if(ropes[k].cleared)continue;let p=project(ropes[k].p[end?N:0]),c=colors[k],sel=selected&&selected.k===k&&selected.end===end;ctx.save();ctx.shadowColor='#1b323451';ctx.shadowBlur=5;ctx.shadowOffsetY=3;const g=ctx.createRadialGradient(p.x-7,p.y-8,0,p.x,p.y,23);g.addColorStop(0,c[1]);g.addColorStop(.65,c[0]);g.addColorStop(1,c[2]);ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,23,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle=c[2];ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=c[1];ctx.globalAlpha=.45;ctx.beginPath();ctx.ellipse(p.x-7,p.y-8,7,4,-.7,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;if(sel){ctx.strokeStyle='#fff6d5';ctx.lineWidth=3;ctx.beginPath();ctx.arc(p.x,p.y,27,0,Math.PI*2);ctx.stroke()}ctx.restore()}
+}
+function sampleRopePoint(p,t){
+// Clamp to this rope's nodes, including when the mode changes after startup.
+const last=p.length-1,bounded=Math.max(0,Math.min(last,t)),i=Math.min(last-1,Math.floor(bounded)),u=bounded-i,a=p[Math.max(0,i-1)],b=p[i],c=p[i+1],d=p[Math.min(last,i+2)],q={};
+for(const k of ['x','y','z'])q[k]=.5*(2*b[k]+(-a[k]+c[k])*u+(2*a[k]-5*b[k]+4*c[k]-d[k])*u*u+(-a[k]+3*b[k]-3*c[k]+d[k])*u*u*u);return q;
+}
+function createTubeRenderer(){
+const gl=tubeCanvas.getContext('webgl',{alpha:true,antialias:true,premultipliedAlpha:false});if(!gl)return null;
+function shader(type,source){const sh=gl.createShader(type);gl.shaderSource(sh,source);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh}
+const program=gl.createProgram();
+gl.attachShader(program,shader(gl.VERTEX_SHADER,`attribute vec3 aPosition;attribute vec3 aNormal;varying vec3 vNormal;void main(){vec3 p=aPosition;gl_Position=vec4((p.x-300.0)/300.0,1.0-(p.y-p.z*.52)/300.0,-(p.z+p.y*.20)/600.0,1.0);vNormal=aNormal;}`));
+gl.attachShader(program,shader(gl.FRAGMENT_SHADER,`precision mediump float;varying vec3 vNormal;uniform vec3 uColor;void main(){vec3 n=normalize(vNormal);vec3 light=normalize(vec3(-.50,-.45,1.0));float diffuse=max(0.0,dot(n,light));float spec=pow(max(0.0,dot(n,normalize(vec3(-.30,-.40,1.35)))),30.0);vec3 c=uColor*(.52+.48*diffuse)+vec3(.60)*spec;gl_FragColor=vec4(c,1.0);}`));
+gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));gl.useProgram(program);
+const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+for(const [name,offset]of [['aPosition',0],['aNormal',12]]){const at=gl.getAttribLocation(program,name);gl.enableVertexAttribArray(at);gl.vertexAttribPointer(at,3,gl.FLOAT,false,24,offset)}
+const colorLoc=gl.getUniformLocation(program,'uColor'),RAD=12;let vertices=new Float32Array(0);gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LESS);gl.clearColor(0,0,0,0);
+const normalize=(v)=>{const d=Math.hypot(...v)||1;return v.map(x=>x/d)};
+function sample(p,t){const q=sampleRopePoint(p,t);return[q.x,q.y,q.z]}
+return()=>{gl.viewport(0,0,1200,1200);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+for(let k=0;k<ropeCount;k++){
+if(ropes[k].cleared)continue;const last=ropes[k].p.length-1,SAMPLES=last*3,required=SAMPLES*RAD*6*6;if(vertices.length!==required)vertices=new Float32Array(required);const rings=[];for(let i=0;i<=SAMPLES;i++){const t=i/3,c=sample(ropes[k].p,t),a=sample(ropes[k].p,t-.05),b=sample(ropes[k].p,t+.05),v=normalize(b.map((x,j)=>x-a[j])),u=normalize([-v[1],v[0],0]),w=[v[1]*u[2]-v[2]*u[1],v[2]*u[0]-v[0]*u[2],v[0]*u[1]-v[1]*u[0]];
+const ring=[];for(let j=0;j<RAD;j++){const a=j/RAD*Math.PI*2,n=u.map((x,l)=>x*Math.cos(a)+w[l]*Math.sin(a));ring.push([...c.map((x,l)=>x+n[l]*R),...n])}rings.push(ring)}
+let at=0;for(let i=0;i<SAMPLES;i++)for(let j=0;j<RAD;j++){const a=rings[i][j],b=rings[i+1][j],c=rings[i+1][(j+1)%RAD],d=rings[i][(j+1)%RAD];for(const v of[a,b,c,a,c,d]){vertices.set(v,at);at+=6}}
+const hex=colors[k][0].slice(1);gl.uniform3f(colorLoc,parseInt(hex.slice(0,2),16)/255,parseInt(hex.slice(2,4),16)/255,parseInt(hex.slice(4,6),16)/255);gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.DYNAMIC_DRAW);gl.drawArrays(gl.TRIANGLES,0,at/6);
+}}
+}
+function createSoftwareTubeRenderer(){
+const W=480,S=W/600,rr=R*S;tubeCanvas.width=W;tubeCanvas.height=W;const surface=tubeCanvas.getContext('2d');if(!surface)return null;
+const image=surface.createImageData(W,W),pixels=image.data,depth=new Float32Array(W*W);
+const shades=colors.map(color=>{const hex=color[0].slice(1),rgb=[0,2,4].map(i=>parseInt(hex.slice(i,i+2),16)),table=new Uint8Array(128*129*3);
+for(let angle=0;angle<128;angle++){const theta=angle/128*Math.PI*2,nx=-Math.sin(theta),ny=Math.cos(theta);for(let q=0;q<129;q++){const side=q/64-1,front=Math.sqrt(Math.max(0,1-side*side)),diff=Math.max(0,-.42*nx*side-.38*ny*side+.83*front),spec=Math.pow(Math.max(0,-.24*nx*side-.30*ny*side+.92*front),26)*100;for(let c=0;c<3;c++)table[(angle*129+q)*3+c]=Math.min(255,rgb[c]*(.55+.48*diff)+spec)}}return table});
+
+const sample=sampleRopePoint;
+return()=>{pixels.fill(0);depth.fill(-1e6);
+for(let k=0;k<ropeCount;k++){
+if(ropes[k].cleared)continue;const table=shades[k];let a=sample(ropes[k].p,0);
+for(let n=1;n<=(ropes[k].p.length-1)*3;n++){
+const b=sample(ropes[k].p,n/3),pa0=project(a),pb0=project(b),pa={x:pa0.x*S,y:pa0.y*S},pb={x:pb0.x*S,y:pb0.y*S},dx=pb.x-pa.x,dy=pb.y-pa.y,len2=dx*dx+dy*dy,invLen=1/Math.sqrt(len2||1),radius=rr+.7,angle=((Math.round(Math.atan2(dy,dx)/Math.PI/2*128)%128)+128)%128;
+const left=Math.max(0,Math.floor(Math.min(pa.x,pb.x)-radius)),right=Math.min(W-1,Math.ceil(Math.max(pa.x,pb.x)+radius)),top=Math.max(0,Math.floor(Math.min(pa.y,pb.y)-radius)),bottom=Math.min(W-1,Math.ceil(Math.max(pa.y,pb.y)+radius));
+for(let y=top;y<=bottom;y++)for(let x=left;x<=right;x++){
+const px=x+.5,py=y+.5,t=Math.max(0,Math.min(1,((px-pa.x)*dx+(py-pa.y)*dy)/(len2||1))),rx=px-pa.x-t*dx,ry=py-pa.y-t*dy,d2=rx*rx+ry*ry;if(d2>radius*radius)continue;
+const distance=Math.sqrt(d2),side=(rx*(-dy)+ry*dx)*invLen/rr,front=Math.sqrt(Math.max(0,1-Math.min(1,d2/(rr*rr)))),z=a.z+(b.z-a.z)*t,worldY=a.y+(b.y-a.y)*t,dep=z+worldY*.20+front*R,index=y*W+x;if(dep<=depth[index])continue;depth[index]=dep;
+const shadeIndex=(angle*129+Math.max(0,Math.min(128,Math.round(side*64+64))))*3,at=index*4;
+pixels[at]=table[shadeIndex];pixels[at+1]=table[shadeIndex+1];pixels[at+2]=table[shadeIndex+2];pixels[at+3]=Math.round(Math.min(1,Math.max(0,rr+.65-distance))*255);
+}a=b;
+}}
+surface.putImageData(image,0,0);
+}
+}
+let tubeRenderer=null;try{tubeRenderer=createTubeRenderer()}catch(err){console.warn('Tube rendering unavailable:',err.message)}
+canvas.dataset.renderer=tubeRenderer?'webgl-depth':'software-depth';if(!tubeRenderer)tubeRenderer=createSoftwareTubeRenderer();
+function coords(e){let rect=canvas.getBoundingClientRect();return{x:(e.clientX-rect.left)*600/rect.width,y:(e.clientY-rect.top)*600/rect.height}}
+function nearestEnd(pos){let best=null,min=43;for(let k=ropeCount-1;k>=0;k--)for(let end=0;end<2;end++){if(ropes[k].cleared)continue;let p=project(ropes[k].p[end?N:0]),d=Math.hypot(p.x-pos.x,p.y-pos.y);if(d<min){min=d;best={k,end}}}return best}
+function emptyAt(pos){let best=-1,min=47;holes.forEach((h,i)=>{if(ropes.some(r=>!r.cleared&&r.ends.includes(i)))return;let d=Math.hypot(h.x-pos.x,h.y-4-pos.y);if(d<min){best=i;min=d}});return best}
+function drop(sel,h,snap){if(h<0)return;history.push(snap);ropes[sel.k].ends[sel.end]=h;moves++;won=false;quiet=0;toast.className='';selected=null;update('绳子正在松开…')}
+function dragTarget(pos){return{x:Math.max(30,Math.min(570,pos.x-pointer.offset.x)),y:Math.max(30,Math.min(570,pos.y-pointer.offset.y+32*.52)),z:32}}
+canvas.addEventListener('pointerdown',e=>{
+if(generating||pointer)return;const pos=coords(e),hit=nearestEnd(pos);if(!hit)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);
+const endPos=project(ropes[hit.k].p[hit.end?N:0]);
+pointer={pos,snapshot:snapshot(),moved:false,id:e.pointerId,offset:{x:pos.x-endPos.x,y:pos.y-endPos.y}};
+selected=hit;drag={...hit,target:dragTarget(pos)};canvas.style.cursor='grabbing';update();
+});
+canvas.addEventListener('pointermove',e=>{
+if(!pointer||pointer.id!==e.pointerId)return;e.preventDefault();const pos=coords(e);
+if(Math.hypot(pos.x-pointer.pos.x,pos.y-pointer.pos.y)>3)pointer.moved=true;
+drag.target=dragTarget(pos);hoverHole=emptyAt(project(drag.target));
+});
+function endPointer(e,cancel=false){
+if(!pointer||e.pointerId!==pointer.id)return;e.preventDefault();const old=pointer,sel=selected,pos=coords(e),target=dragTarget(pos),dest=emptyAt(project(target));
+pointer=null;drag=null;selected=null;hoverHole=-1;canvas.style.cursor='grab';
+if(!cancel&&old.moved&&dest>=0){drop(sel,dest,old.snapshot);update('松手吸附，绳子正在收紧')}
+else{restore(old.snapshot);update(old.moved?'没放进空孔，已回到原位':'按住绳头拖动，松手放入空孔')}
+if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);
+}
+canvas.addEventListener('pointerup',e=>endPointer(e));canvas.addEventListener('pointercancel',e=>endPointer(e,true));
+canvas.addEventListener('lostpointercapture',e=>{if(pointer&&e.pointerId===pointer.id){const old=pointer;pointer=null;drag=null;selected=null;restore(old.snapshot);canvas.style.cursor='grab'}});
+canvas.style.cursor='grab';
+root.querySelector('#rope-mode').onchange=e=>{ropeCount=Number(e.target.value);N=ropeCount===3?36:ropeCount===5?40:48;opening=null;beginOpening(true)};root.querySelector('#reset').onclick=reset;root.querySelector('#shuffle').onclick=()=>beginOpening(true);undoBtn.onclick=()=>{if(history.length)restore(history.pop())};root.querySelector('#demo').onclick=()=>{history.push(snapshot());demoMode=true;selected=null;drag=null;for(let k=0;k<ropeCount;k++){const r=ropes[k];r.cleared=false;r.freeSince=null;r.ends=[k*2,k*2+1];const a=holes[r.ends[0]],b=holes[r.ends[1]];r.rest=Math.hypot(a.x-b.x,a.y-b.y)/N*1.015;for(let i=0;i<=N;i++){let t=i/N;r.p[i]=point(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,10)}}won=false;toast.textContent='解开的绳子会自动退场';toast.className='show';update('效果展示 · 可撤销回到刚才')};
+function ropeCrossings(includeSelf=true){const counts=Array(ropeCount).fill(0);for(const [A,B]of nearbyPairs(ropes,null,includeSelf)){
+const a=A.a,b=A.b,c=B.a,d=B.b,dx=b.x-a.x,dy=b.y-a.y,ex=d.x-c.x,ey=d.y-c.y,den=dx*ey-dy*ex;if(Math.abs(den)<1e-8)continue;
+const x=c.x-a.x,y=c.y-a.y,t=(x*ey-y*ex)/den,u=(x*dy-y*dx)/den;if(t>=-1e-7&&t<=1+1e-7&&u>=-1e-7&&u<=1+1e-7){counts[A.k]++;if(B.k!==A.k)counts[B.k]++}
+}return counts}
+function intersections(){return ropeCrossings(false).reduce((a,b)=>a+b,0)/2}
+function checkCleared(now){
+if(drag||pointer||(!moves&&!demoMode)||won){for(const r of ropes)r.freeSince=null;return}
+const counts=ropeCrossings();let removed=0;
+for(let k=0;k<ropeCount;k++){const r=ropes[k];if(r.cleared)continue;if(counts[k]){r.freeSince=null;continue}if(r.freeSince===null||r.freeSince===undefined)r.freeSince=now;if(now-r.freeSince>=650){r.cleared=true;r.freeSince=null;removed++}}
+if(!removed)return;updateSlots();
+if(ropes.every(r=>r.cleared)){won=true;toast.textContent='全部解开，棋盘清空！';toast.className='show';update('全部 '+ropeCount+' 根绳子都解开了')}
+else update('解开的绳子已退场，继续解下一根');
+}
+let visible=true,rafId=0,prev=0,frames=0,lastHidden=0;
+new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(visible&&!document.hidden)startLoop()},{rootMargin:'100px'}).observe(root);
+function startLoop(){if(rafId||document.hidden||!visible)return;prev=0;rafId=requestAnimationFrame(loop)}
+function stopLoop(){if(rafId){cancelAnimationFrame(rafId);rafId=0}prev=0}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){lastHidden=performance.now();stopLoop()}else{const hiddenFor=performance.now()-lastHidden;if(hiddenFor>120){for(const r of ropes)for(const p of r.p){p.ox=p.x;p.oy=p.y;p.oz=p.z}}startLoop()}});
+window.addEventListener('pagehide',stopLoop,{passive:true});window.addEventListener('pageshow',startLoop,{passive:true});
+function loop(t){rafId=0;if(document.hidden||!visible)return;if(!generating&&t-prev>16.7){const started=performance.now();physics();if(frames%8===0)checkCleared(t);draw();if(frames%60===0)canvas.dataset.frameMs=(performance.now()-started).toFixed(1);prev=t;frames++}rafId=requestAnimationFrame(loop)}reset();startLoop();
+window.ropeGame={snapshot,reset,intersections,ropeCrossings,checkCleared,makeOpening,physics,minimumSeparation,motionFraction,get guardStops(){return guardStops},get holes(){return holes},get ropes(){return ropes},get moves(){return moves},get selected(){return selected}};
+})();
+</script></body></html>
+

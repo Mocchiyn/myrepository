@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#d4b83c"><title>舒尔特表 · 液晶掌机</title><style>
+@font-face{font-family:LCD;src:url(data:font/ttf;base64,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) format('truetype');font-display:swap}
+:root{--ink:#172017;--lcd:#a4ae8b;--ghost:rgba(38,53,30,.10);--yellow:#d4b83c;--mono:'Courier New',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;min-height:100svh;background:#151613;color:var(--ink);font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;display:flex;align-items:flex-start;justify-content:center;padding:28px 14px 36px;-webkit-tap-highlight-color:transparent;background-image:radial-gradient(ellipse at 50% 0,#303129,transparent 65%)}
+button{font:inherit;cursor:pointer;touch-action:manipulation}button:focus-visible,.select-trigger:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+.app{width:100%;max-width:520px;padding:17px 13px 20px;background:linear-gradient(105deg,#e2c852,#c4a42b 49%,#dfc14a);border:2px solid #7f681c;border-radius:13px;box-shadow:inset 2px 2px 2px #f5e28a,inset -3px -3px 3px #91771d,0 16px 35px #0009;position:relative}
+header{display:flex;justify-content:space-between;align-items:center;padding:0 6px 14px;gap:8px}h1{font-size:17px;letter-spacing:2px;font-weight:800}.brand small{font-family:var(--mono);font-size:9px;letter-spacing:1.8px;display:block;margin-top:4px}.model{font:10px var(--mono);letter-spacing:1px;border:1px solid #78641b;padding:5px 6px;border-radius:2px}
+.screen-bezel{border:3px solid #575a42;border-radius:3px;padding:5px;background:#7e8466;box-shadow:0 1px 0 #f5df74,inset 1px 2px 3px #3337}
+.screen{background:var(--lcd);padding:12px 10px 10px;box-shadow:inset 2px 3px 9px #2d39183d;position:relative;border:1px solid #363e2c}
+.screen:after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 3px,#18260f03 3px 4px);z-index:2}
+.screen-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:11px}.screen-title{font-size:10px;letter-spacing:1.5px;font-weight:700}.screen-title small{display:block;margin-top:5px;font-size:9px;font-weight:400;letter-spacing:.5px}.timer-unit{text-align:right}.label{font-size:10px;letter-spacing:1px;display:block;margin-bottom:7px}.timer-unit .label{display:inline-block;margin:0 5px 0 0;font-size:9px;vertical-align:middle}.value{font-family:LCD,var(--mono);font-size:30px;line-height:1.1;text-shadow:1px 1px 1px #17201720;font-variant-numeric:tabular-nums}
+.playfield{display:grid;grid-template-columns:minmax(0,1fr) 62px;gap:10px;align-items:stretch}.board-wrapper{border:2px solid var(--ink);padding:5px;box-shadow:inset 0 0 0 2px #bac3a0;align-self:start}.board{display:grid;grid-template-columns:repeat(var(--size,5),minmax(0,1fr));gap:3px}.cell{aspect-ratio:1;min-width:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #74815f;box-shadow:inset 0 0 0 2px #b4bd9a80;color:var(--ink);font-family:var(--mono);font-size:clamp(14px,calc(132px / var(--size)),30px);font-weight:400;border-radius:0;line-height:1;padding:0;user-select:none;-webkit-appearance:none;appearance:none}.cell:active:not(.done){background:#53634645}.cell.done{color:var(--lcd);background:var(--ink);border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--lcd),inset 0 0 0 3px var(--ink);opacity:1;-webkit-text-fill-color:var(--lcd)}.cell.wrong{background:#53634660;animation:shake .16s linear 2}.board-wrapper.solved{box-shadow:inset 0 0 0 2px var(--ink),0 0 0 1px var(--ink)}@keyframes shake{25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+.stats{display:flex;flex-direction:column;justify-content:space-between;gap:18px;padding:3px 0}.stat .value{font-size:35px;display:block;text-align:right}.stat .label{font-size:10px;letter-spacing:.3px}.stat small{display:block;font-size:9px;margin-top:5px;text-align:right;opacity:.6}.lcd-mark{display:grid;grid-template-columns:repeat(3,12px);gap:3px;justify-content:end;margin-bottom:3px}.lcd-mark i{width:12px;height:12px;border:1px solid #7d8b69;box-shadow:inset 0 0 0 2px var(--lcd);background:#87947233}.lcd-mark i:nth-child(2),.lcd-mark i:nth-child(4),.lcd-mark i:nth-child(5){background:var(--ink);border-color:var(--ink)}
+.screen-caption{display:flex;justify-content:space-between;font:9px var(--mono);letter-spacing:.5px;margin:10px 0 15px;opacity:.75}.records-panel{border-top:1px solid #546046;padding-top:10px}.records-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}.records-head h2{font-size:11px;font-weight:400;letter-spacing:1px}.records-head span{font:11px var(--mono)}#records{list-style:none}#records li{display:grid;grid-template-columns:18px 1fr auto auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #67745338;font-size:10px}#records li:last-child{border:0}#records .rtime{font:16px LCD,var(--mono)}#records .rank{font:11px var(--mono);opacity:.6}#records .rdate{font:10px var(--mono);opacity:.6}#records li.empty{display:block;text-align:center;padding:13px 0 10px;font-size:11px;letter-spacing:2px;opacity:.55}#records li.new{background:#26371918}
+.controls{display:grid;grid-template-columns:1fr 1.35fr;gap:16px;margin:18px 5px 0;align-items:start}.control-group>span{display:block;font:9px var(--mono);letter-spacing:1.3px;text-align:center;margin-bottom:7px}.pixel-btn,.select-trigger{min-height:43px;border:1px solid #434533;background:linear-gradient(#515447,#30342a);border-radius:5px;box-shadow:0 3px 0 #21251c,0 4px 5px #5b490d55,inset 0 1px 0 #858779;color:#e0d9b5;display:flex;align-items:center;justify-content:center;font-size:13px;letter-spacing:1px;user-select:none;padding:9px 12px;width:100%;-webkit-appearance:none;appearance:none}.pixel-btn:active,.select-trigger:active{transform:translateY(2px);box-shadow:0 1px 0 #21251c}.select-trigger{font:16px var(--mono)}.custom-select{position:relative}.select-options{display:none;position:absolute;bottom:calc(100% + 10px);left:0;right:0;background:var(--lcd);border:2px solid var(--ink);box-shadow:3px 3px 0 #17201740;z-index:20}.select-options.show{display:flex;flex-direction:column}.select-options div{font:15px var(--mono);padding:13px 8px;text-align:center;cursor:pointer}.select-options div.selected,.select-options div:active{background:var(--ink);color:var(--lcd)}
+.footer-actions{margin:17px 5px 0;display:flex;justify-content:space-between;align-items:center}.footer-actions>span{font:9px var(--mono);letter-spacing:1px;opacity:.7}#clearRecords{border:none;background:none;box-shadow:none;color:#514819;font-size:11px;min-height:32px;padding:5px 0;width:auto;text-decoration:underline;text-underline-offset:3px}.toast{position:fixed;bottom:28px;left:50%;transform:translate(-50%,15px);background:var(--ink);color:var(--lcd);border:1px solid #8f9a78;max-width:90vw;padding:12px 17px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:100;text-align:center}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(min-width:480px){body{padding-top:40px}.app{padding:21px 19px}.screen{padding:16px}.playfield{grid-template-columns:minmax(0,1fr) 77px;gap:14px}.cell{font-size:calc(155px / var(--size))}.stat .value{font-size:42px}.stats{padding:8px 0}.value{font-size:36px}}
+@media(max-width:350px){body{padding:14px 8px}.app{padding:14px 9px}.screen{padding:10px 7px}.playfield{grid-template-columns:minmax(0,1fr) 50px;gap:6px}.board-wrapper{padding:3px}.board{gap:2px}.cell{font-size:calc(108px / var(--size))}.stat .value{font-size:28px}.value{font-size:25px}.screen-title{font-size:9px}h1{font-size:15px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Full-width board and a separate records screen. */
+body{padding:16.8px 11.2px 36px}
+.playfield{display:flex;flex-direction:column;gap:13px}
+.board-wrapper{width:100%;align-self:stretch}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:10px 0 0;border-top:1px solid #546046}
+.stat{display:grid;grid-template-columns:1fr auto;align-items:center;padding:0 13px}
+.stat:first-child{padding-left:0;border-right:1px solid #67745366}
+.stat:last-child{padding-right:0}
+.stat .label{grid-column:1;grid-row:1;margin-bottom:3px}
+.stat small{grid-column:1;grid-row:2;text-align:left;margin:0;font-size:9px}
+.stat .value{grid-column:2;grid-row:1 / 3;font-size:30px}
+.screen-caption{margin:11px 0 12px}
+.best-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #546046;padding-top:11px;min-height:36px}
+.best-summary .best-label{font-size:10px;letter-spacing:.5px;white-space:nowrap}
+#bestRecord{display:flex;gap:8px;align-items:center;justify-content:flex-end;font-size:10px}
+#bestRecord .best-time{font:20px LCD,var(--mono)}
+#bestRecord .best-meta{font-size:9px;opacity:.65}
+#bestRecord.empty{font-size:11px;opacity:.55}
+#viewRecords{border:none;background:none;box-shadow:none;color:#514819;font-size:11px;min-height:32px;padding:5px 0;width:auto;text-decoration:underline;text-underline-offset:3px}
+.records-dialog{margin:auto;width:calc(100% - 24px);max-width:440px;max-height:85svh;overflow:auto;padding:7px;border:3px solid #b69a29;border-radius:7px;background:linear-gradient(110deg,#e2c852,#c4a42b);color:var(--ink);box-shadow:0 16px 50px #0008;font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif}
+.records-dialog::backdrop{background:#0b100bd9}
+.records-dialog .records-inner{background:var(--lcd);padding:18px 14px;border:2px solid #4d573e;box-shadow:inset 2px 3px 8px #2d391830;min-height:240px}
+.dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #546046;padding-bottom:14px;margin-bottom:16px}
+.dialog-heading h2{font-size:17px;letter-spacing:2px}
+.dialog-heading small{font:9px var(--mono);display:block;margin-top:5px;letter-spacing:1px}
+#closeRecords{background:transparent;color:var(--ink);border:1px solid #546046;border-radius:2px;min-height:36px;padding:7px 10px;font-size:12px}
+.records-dialog .records-panel{border:0;padding:0}
+.records-dialog .records-head{margin-bottom:12px}
+.records-dialog #records li{padding:12px 0;grid-template-columns:17px 1fr auto;gap:7px 10px}
+.records-dialog #records .rtime{font-size:22px}
+.records-dialog #records .rdate{grid-column:2 / 4;display:block;font-size:11px;letter-spacing:.5px;margin-top:0}
+.records-dialog #records .rmeta{font-size:11px}
+.records-dialog #records li.empty{display:block;padding:36px 0}
+.dialog-footer{display:flex;justify-content:flex-end;border-top:1px solid #546046;margin-top:18px;padding-top:10px}
+.records-note{font-size:10px;opacity:.6;margin-top:17px}
+#clearRecords{color:var(--ink);min-height:36px;font-size:11px}
+@media(min-width:480px){body{padding-top:24px}.playfield{gap:15px}.stat .value{font-size:36px}}
+@media(max-width:350px){body{padding:8.4px 6.4px 30px}.playfield{gap:10px}.stat .value{font-size:28px}.best-summary .best-label{font-size:9px}#bestRecord .best-time{font-size:18px}}
+</style></head><body>
+<div class="app">
+  <header><div class="brand"><h1>舒尔特表</h1><small>SCHULTE POCKET</small></div><a class="model" href="./index.html" style="color:inherit;text-decoration:none;min-height:34px;display:flex;align-items:center" aria-label="返回游戏菜单">← 菜单</a></header>
+  <div class="screen-bezel"><main class="screen">
+    <div class="screen-top"><div class="screen-title">NUMBER SEARCH<small>按顺序点击数字</small></div><div class="timer-unit"><span class="label">TIME</span><span class="value" id="timer" aria-label="用时">0.00</span></div></div>
+    <div class="playfield">
+      <div class="board-wrapper" id="boardWrapper"><div class="board" id="board" aria-label="舒尔特数字棋盘"></div></div>
+      <aside class="stats"><div class="stat"><span class="label">NEXT</span><span class="value" id="next" aria-label="下一个数字">1</span><small>下一个</small></div><div class="stat"><span class="label">ERRORS</span><span class="value" id="errors" aria-label="误点次数">0</span><small>误点</small></div></aside>
+    </div>
+    <div class="screen-caption"><span>START AT 01</span><span>FOCUS · FIND · TAP</span></div>
+    <div class="best-summary"><span class="best-label">BEST / 历史最佳</span><div id="bestRecord" class="empty">暂无记录</div></div>
+  </main></div>
+  <div class="controls"><div class="control-group"><span>GRID / 尺寸</span><div class="custom-select" id="sizeSelect"><button type="button" class="select-trigger" id="selectTrigger" aria-label="选择棋盘尺寸">5 × 5</button><div class="select-options" id="selectOptions"><div data-size="3">3 × 3</div><div data-size="4">4 × 4</div><div data-size="5" class="selected">5 × 5</div><div data-size="6">6 × 6</div><div data-size="7">7 × 7</div></div></div></div><div class="control-group"><span>RESET / 新一局</span><button id="restart" class="pixel-btn" type="button">重新开始</button></div></div>
+  <div class="footer-actions"><span>• SCHULTE TRAINER</span><button id="viewRecords" class="pixel-btn" type="button">查看记录</button></div>
+</div>
+
+<dialog id="recordsDialog" class="records-dialog" aria-labelledby="recordsTitle">
+  <div class="records-inner">
+    <div class="dialog-heading"><div><h2 id="recordsTitle">历史记录</h2><small>PERSONAL BEST / TOP 05</small></div><button id="closeRecords" type="button" autofocus>返回</button></div>
+    <section class="records-panel"><div class="records-head"><h2>BEST / 最佳记录</h2><span id="recordSizeLabel">5 × 5</span></div><ol id="records"></ol></section>
+    <p class="records-note">按当前棋盘尺寸显示最快的 5 次成绩</p>
+    <div class="dialog-footer"><button id="clearRecords" class="pixel-btn" type="button">清空当前尺寸记录</button></div>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function () {
+  'use strict';
+
+  const STORAGE_KEY = 'schulte-records-custom-v1';
+  const MAX_RECORDS = 5;
+
+  const boardEl = document.getElementById('board');
+  const boardWrapper = document.getElementById('boardWrapper');
+  const timerEl = document.getElementById('timer');
+  const nextEl = document.getElementById('next');
+  const errorsEl = document.getElementById('errors');
+  const recordsEl = document.getElementById('records');
+  const bestRecordEl = document.getElementById('bestRecord');
+  const recordsDialog = document.getElementById('recordsDialog');
+  document.getElementById('viewRecords').addEventListener('click', () => recordsDialog.showModal());
+  document.getElementById('closeRecords').addEventListener('click', () => recordsDialog.close());
+  recordsDialog.addEventListener('click', e => { if (e.target === recordsDialog) { const rect = recordsDialog.getBoundingClientRect(); if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) recordsDialog.close(); } });
+  const recordSizeLabel = document.getElementById('recordSizeLabel');
+  
+  const selectTrigger = document.getElementById('selectTrigger');
+  const selectOptions = document.getElementById('selectOptions');
+  
+  const restartBtn = document.getElementById('restart');
+  const clearBtn = document.getElementById('clearRecords');
+  const toastEl = document.getElementById('toast');
+
+  let size = 5;
+  let total = size * size;
+  let next = 1;
+  let errors = 0;
+  let started = false;
+  let finished = false;
+  let startTime = 0;
+  let rafId = 0;
+  let newRecordTs = 0;
+
+  const fmtSec = ms => (ms / 1000).toFixed(2);
+
+  /* ---------- 下拉菜单 ---------- */
+  selectTrigger.addEventListener('click', function(e) {
+    e.stopPropagation();
+    selectOptions.classList.toggle('show');
+  });
+
+  document.addEventListener('click', function() {
+    selectOptions.classList.remove('show');
+  });
+
+  // 单独绑定，杜绝兼容性报错
+  const optionDivs = selectOptions.querySelectorAll('div[data-size]');
+  optionDivs.forEach(div => {
+    div.addEventListener('click', function(e) {
+      e.stopPropagation();
+      
+      optionDivs.forEach(c => c.classList.remove('selected'));
+      this.classList.add('selected');
+      
+      size = Number(this.dataset.size);
+      selectTrigger.textContent = size + ' × ' + size;
+      
+      selectOptions.classList.remove('show');
+      newGame();
+    });
+  });
+
+  /* ---------- 工具 ---------- */
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toastEl.classList.remove('show'), 2400);
+  }
+
+  /* ---------- 记录存储 ---------- */
+  function loadRecords() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.filter(r => r && typeof r.ms === 'number') : [];
+    } catch (e) { return []; }
+  }
+
+  function saveRecords(list) {
+    const grouped = {};
+    list.forEach(r => {
+      (grouped[r.size] = grouped[r.size] || []).push(r);
+    });
+    const kept = [];
+    Object.keys(grouped).forEach(k => {
+      grouped[k].sort((a, b) => a.ms - b.ms);
+      kept.push.apply(kept, grouped[k].slice(0, MAX_RECORDS));
+    });
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(kept));
+    } catch (e) { /* ignore */ }
+  }
+
+  function renderRecords() {
+    recordSizeLabel.textContent = size + ' × ' + size;
+    const list = loadRecords()
+      .filter(r => r.size === size)
+      .sort((a, b) => a.ms - b.ms)
+      .slice(0, MAX_RECORDS);
+
+    bestRecordEl.classList.toggle('empty', !list.length);
+    bestRecordEl.innerHTML = list.length
+      ? '<span class="best-time">' + fmtSec(list[0].ms) + '</span><span class="best-meta">s · ' + (list[0].errors ? list[0].errors + '误点' : '全对') + '</span>'
+      : '暂无记录';
+
+    if (!list.length) {
+      recordsEl.innerHTML = '<li class="empty">暂无记录</li>';
+      return;
+    }
+
+    recordsEl.innerHTML = list.map(function (r, i) {
+      const d = new Date(r.ts);
+      const pad = n => String(n).padStart(2, '0');
+      const dateStr = d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+      const isNew = r.ts === newRecordTs ? ' class="new"' : '';
+      const meta = r.errors ? r.errors + '误点' : '全对';
+      return '<li' + isNew + '>' +
+        '<span class="rank">' + (i + 1) + '</span>' +
+        '<span class="rtime">' + fmtSec(r.ms) + 's</span>' +
+        '<span class="rmeta">' + meta + '</span>' +
+        '<span class="rdate">' + dateStr + '</span>' +
+        '</li>';
+    }).join('');
+  }
+
+  /* ---------- 游戏核心 ---------- */
+  function newGame() {
+    cancelAnimationFrame(rafId);
+    total = size * size;
+    next = 1;
+    errors = 0;
+    started = false;
+    finished = false;
+    newRecordTs = 0;
+
+    timerEl.textContent = '0.00';
+    nextEl.textContent = '1';
+    errorsEl.textContent = '0';
+    boardWrapper.classList.remove('solved');
+
+    boardEl.style.setProperty('--size', size);
+
+    const nums = shuffle(Array.from({ length: total }, (_, i) => i + 1));
+    const frag = document.createDocumentFragment();
+    
+    nums.forEach(function (n) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'cell';
+      b.textContent = n;
+      b.dataset.n = n;
+      b.addEventListener('click', onCellClick);
+      frag.appendChild(b);
+    });
+
+    boardEl.innerHTML = '';
+    boardEl.appendChild(frag);
+    renderRecords();
+  }
+
+  function onCellClick(e) {
+    if (finished) return;
+    const btn = e.currentTarget;
+    const n = Number(btn.dataset.n);
+
+    if (n !== next) {
+      errors++;
+      errorsEl.textContent = errors;
+      btn.classList.remove('wrong');
+      void btn.offsetWidth;
+      btn.classList.add('wrong');
+      setTimeout(() => btn.classList.remove('wrong'), 400);
+      return;
+    }
+
+    if (!started) {
+      started = true;
+      startTime = performance.now();
+      tick();
+    }
+
+    btn.classList.add('done');
+    btn.disabled = true;
+    next++;
+
+    if (next > total) {
+      finish();
+    } else {
+      nextEl.textContent = next;
+    }
+  }
+
+  function tick() {
+    timerEl.textContent = fmtSec(performance.now() - startTime);
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function finish() {
+    finished = true;
+    cancelAnimationFrame(rafId);
+
+    const ms = performance.now() - startTime;
+    timerEl.textContent = fmtSec(ms);
+    nextEl.textContent = 'OK';
+    boardWrapper.classList.add('solved');
+
+    const record = { ms: Math.round(ms), ts: Date.now(), size: size, errors: errors };
+    newRecordTs = record.ts;
+
+    const all = loadRecords();
+    all.push(record);
+    saveRecords(all);
+    renderRecords();
+
+    toast('通关！用时 ' + fmtSec(ms) + ' 秒');
+  }
+
+  /* ---------- 绑定 ---------- */
+  restartBtn.addEventListener('click', newGame);
+
+  clearBtn.addEventListener('click', function () {
+    if (!confirm('确定清空 ' + size + '×' + size + ' 的记录吗？')) return;
+    const kept = loadRecords().filter(r => r.size !== size);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(kept)); } catch (e) {}
+    newRecordTs = 0;
+    renderRecords();
+    toast('已清空');
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (recordsDialog.open) return;
+    if (e.key === 'r' || e.key === 'R' || e.key === ' ') {
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+      e.preventDefault();
+      newGame();
+    }
+  });
+
+  newGame();
+})();
+</script></body></html>
