@@ -10,7 +10,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:0 6
 .screen-bezel{border:3px solid #575a42;border-radius:3px;padding:5px;background:#7e8466;box-shadow:0 1px 0 #f5df74,inset 1px 2px 3px #3337}
 .screen{background:var(--lcd);padding:12px 10px 10px;box-shadow:inset 2px 3px 9px #2d39183d;position:relative;border:1px solid #363e2c}
 .screen:after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 3px,#18260f03 3px 4px);z-index:2}
-.screen-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:11px}.screen-title{font-size:10px;letter-spacing:1.5px;font-weight:700}.screen-title small{display:block;margin-top:5px;font-size:9px;font-weight:400;letter-spacing:.5px}.timer-unit{text-align:right}.label{font-size:10px;letter-spacing:1px;display:block;margin-bottom:7px}.timer-unit .label{display:inline-block;margin:0 5px 0 0;font-size:9px;vertical-align:middle}.value{font-family:LCD,var(--mono);font-size:30px;line-height:1.1;text-shadow:1px 1px 1px #17201720;font-variant-numeric:tabular-nums}
+.screen-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:11px}.screen-title{font-size:10px;letter-spacing:1.5px;font-weight:700}.screen-title small{display:block;margin-top:5px;font-size:9px;font-weight:400;letter-spacing:.5px}.timer-unit{text-align:right;background:none;border:0;color:inherit;padding:0;white-space:nowrap}.timer-unit.time-hidden #timer{visibility:hidden}.timer-unit:focus-visible{outline:2px solid var(--ink);outline-offset:4px}.label{font-size:10px;letter-spacing:1px;display:block;margin-bottom:7px}.timer-unit .label{display:inline-block;margin:0 5px 0 0;font-size:9px;vertical-align:middle}.value{font-family:LCD,var(--mono);font-size:30px;line-height:1.1;text-shadow:1px 1px 1px #17201720;font-variant-numeric:tabular-nums}
 .playfield{display:grid;grid-template-columns:minmax(0,1fr) 62px;gap:10px;align-items:stretch}.board-wrapper{border:2px solid var(--ink);padding:5px;box-shadow:inset 0 0 0 2px #bac3a0;align-self:start}.board{display:grid;grid-template-columns:repeat(var(--size,5),minmax(0,1fr));gap:3px}.cell{aspect-ratio:1;min-width:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #74815f;box-shadow:inset 0 0 0 2px #b4bd9a80;color:var(--ink);font-family:var(--mono);font-size:clamp(14px,calc(132px / var(--size)),30px);font-weight:400;border-radius:0;line-height:1;padding:0;user-select:none;-webkit-appearance:none;appearance:none}.cell:active:not(.done){background:#53634645}.cell.done{color:var(--lcd);background:var(--ink);border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--lcd),inset 0 0 0 3px var(--ink);opacity:1;-webkit-text-fill-color:var(--lcd)}.cell.wrong{background:#53634660;animation:shake .16s linear 2}.board-wrapper.solved{box-shadow:inset 0 0 0 2px var(--ink),0 0 0 1px var(--ink)}@keyframes shake{25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
 .stats{display:flex;flex-direction:column;justify-content:space-between;gap:18px;padding:3px 0}.stat .value{font-size:35px;display:block;text-align:right}.stat .label{font-size:10px;letter-spacing:.3px}.stat small{display:block;font-size:9px;margin-top:5px;text-align:right;opacity:.6}.lcd-mark{display:grid;grid-template-columns:repeat(3,12px);gap:3px;justify-content:end;margin-bottom:3px}.lcd-mark i{width:12px;height:12px;border:1px solid #7d8b69;box-shadow:inset 0 0 0 2px var(--lcd);background:#87947233}.lcd-mark i:nth-child(2),.lcd-mark i:nth-child(4),.lcd-mark i:nth-child(5){background:var(--ink);border-color:var(--ink)}
 .screen-caption{display:flex;justify-content:space-between;font:9px var(--mono);letter-spacing:.5px;margin:10px 0 15px;opacity:.75}.records-panel{border-top:1px solid #546046;padding-top:10px}.records-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}.records-head h2{font-size:11px;font-weight:400;letter-spacing:1px}.records-head span{font:11px var(--mono)}#records{list-style:none}#records li{display:grid;grid-template-columns:18px 1fr auto auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #67745338;font-size:10px}#records li:last-child{border:0}#records .rtime{font:16px LCD,var(--mono)}#records .rank{font:11px var(--mono);opacity:.6}#records .rdate{font:10px var(--mono);opacity:.6}#records li.empty{display:block;text-align:center;padding:13px 0 10px;font-size:11px;letter-spacing:2px;opacity:.55}#records li.new{background:#26371918}
@@ -62,7 +62,7 @@ body{padding:16.8px 11.2px 36px}
 <div class="app">
   <header><div class="brand"><h1>舒尔特表</h1><small>SCHULTE POCKET</small></div><a class="model" href="./index.html" style="color:inherit;text-decoration:none;min-height:34px;display:flex;align-items:center" aria-label="返回游戏菜单">← 菜单</a></header>
   <div class="screen-bezel"><main class="screen">
-    <div class="screen-top"><div class="screen-title">NUMBER SEARCH<small>按顺序点击数字</small></div><div class="timer-unit"><span class="label">TIME</span><span class="value" id="timer" aria-label="用时">0.00</span></div></div>
+    <div class="screen-top"><div class="screen-title">NUMBER SEARCH<small>按顺序点击数字</small></div><button type="button" class="timer-unit" id="toggleTimer" aria-label="隐藏计时" aria-pressed="false" title="点击隐藏或显示计时"><span class="label">TIME</span><span class="value" id="timer" aria-label="用时">0.00</span></button></div>
     <div class="playfield">
       <div class="board-wrapper" id="boardWrapper"><div class="board" id="board" aria-label="舒尔特数字棋盘"></div></div>
       <aside class="stats"><div class="stat"><span class="label">NEXT</span><span class="value" id="next" aria-label="下一个数字">1</span><small>下一个</small></div><div class="stat"><span class="label">ERRORS</span><span class="value" id="errors" aria-label="误点次数">0</span><small>误点</small></div></aside>
@@ -93,6 +93,7 @@ body{padding:16.8px 11.2px 36px}
   const boardEl = document.getElementById('board');
   const boardWrapper = document.getElementById('boardWrapper');
   const timerEl = document.getElementById('timer');
+  const timerToggle = document.getElementById('toggleTimer');
   const nextEl = document.getElementById('next');
   const errorsEl = document.getElementById('errors');
   const recordsEl = document.getElementById('records');
@@ -119,6 +120,20 @@ body{padding:16.8px 11.2px 36px}
   let startTime = 0;
   let rafId = 0;
   let newRecordTs = 0;
+  let timerHidden = false;
+
+  function updateTimerVisibility(forceShow = false) {
+    const hidden = timerHidden && !forceShow;
+    timerToggle.classList.toggle('time-hidden', hidden);
+    timerToggle.setAttribute('aria-pressed', String(hidden));
+    timerToggle.setAttribute('aria-label', hidden ? '显示计时' : '隐藏计时');
+    timerEl.setAttribute('aria-hidden', String(hidden));
+  }
+
+  timerToggle.addEventListener('click', function () {
+    timerHidden = !timerToggle.classList.contains('time-hidden');
+    updateTimerVisibility();
+  });
 
   const fmtSec = ms => (ms / 1000).toFixed(2);
 
@@ -230,6 +245,7 @@ body{padding:16.8px 11.2px 36px}
     started = false;
     finished = false;
     newRecordTs = 0;
+    updateTimerVisibility();
 
     timerEl.textContent = '0.00';
     nextEl.textContent = '1';
@@ -295,6 +311,7 @@ body{padding:16.8px 11.2px 36px}
 
   function finish() {
     finished = true;
+    updateTimerVisibility(true);
     cancelAnimationFrame(rafId);
 
     const ms = performance.now() - startTime;
@@ -306,11 +323,15 @@ body{padding:16.8px 11.2px 36px}
     newRecordTs = record.ts;
 
     const all = loadRecords();
+    const previous = all.filter(r => r.size === size);
+    const isFirst = previous.length === 0;
+    const isNewBest = !isFirst && record.ms < Math.min(...previous.map(r => r.ms));
     all.push(record);
     saveRecords(all);
     renderRecords();
 
-    toast('通关！用时 ' + fmtSec(ms) + ' 秒');
+    const achievement = isFirst ? '，首次纪录已诞生！' : isNewBest ? '，刷新纪录！🎉' : '';
+    toast('通关！用时 ' + fmtSec(ms) + ' 秒' + achievement);
   }
 
   /* ---------- 绑定 ---------- */
@@ -326,7 +347,7 @@ body{padding:16.8px 11.2px 36px}
   });
 
   document.addEventListener('keydown', function (e) {
-    if (recordsDialog.open) return;
+    if (recordsDialog.open || e.target === timerToggle || timerToggle.contains(e.target)) return;
     if (e.key === 'r' || e.key === 'R' || e.key === ' ') {
       if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
       e.preventDefault();
