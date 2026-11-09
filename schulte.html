@@ -58,10 +58,24 @@ body{padding:16.8px 11.2px 36px}
 #clearRecords{color:var(--ink);min-height:36px;font-size:11px}
 @media(min-width:480px){body{padding-top:24px}.playfield{gap:15px}.stat .value{font-size:36px}}
 @media(max-width:350px){body{padding:8.4px 6.4px 30px}.playfield{gap:10px}.stat .value{font-size:28px}.best-summary .best-label{font-size:9px}#bestRecord .best-time{font-size:18px}}
+
+.mode-control{display:flex;align-items:center;gap:6px;margin-left:auto;white-space:nowrap}
+.mode-label{font-size:10px;letter-spacing:0}.mode-switch{position:relative;width:43px;height:25px;padding:0;border:1px solid #66551b;border-radius:20px;background:#9b8128;box-shadow:inset 0 2px 4px #40351055;flex-shrink:0}
+.mode-switch:after{content:'';position:absolute;left:3px;top:3px;width:17px;height:17px;border-radius:50%;background:#f4e398;box-shadow:0 1px 3px #30291088;transition:transform .2s}
+.mode-switch[aria-checked="true"]{background:#3e5136}.mode-switch[aria-checked="true"]:after{transform:translateX(18px)}
+#driftArena{display:none;position:relative;width:100%;height:clamp(380px,63svh,610px);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.drift-mode .screen{padding:0}.drift-mode #driftArena{display:block}.drift-mode .screen-top,.drift-mode .playfield,.drift-mode .screen-caption{display:none}
+.drift-ball{position:absolute;left:0;top:0;display:flex;align-items:center;justify-content:center;border:1px solid #536346;border-radius:50%;background:#adb897;box-shadow:inset 0 0 0 2px #c3ccad66;color:var(--ink);font:400 22px var(--mono);padding:0;line-height:1;touch-action:none;will-change:transform;-webkit-appearance:none;appearance:none}
+.drift-ball.wrong{background:#66765366}.drift-ball:active{background:#84966c}
+#driftHud[hidden]{display:none}#driftHud{display:grid;grid-template-columns:auto 1fr;gap:12px 16px;align-items:center;margin:15px 5px 0}
+#driftHud .timer-unit .value{font-size:27px}#driftHud .stats{border:0;padding:0;gap:10px}#driftHud .stat{padding:0 7px}#driftHud .stat .value{font-size:25px}#driftHud .stat .label{font-size:9px}#driftHud .best-summary{grid-column:1 / -1;border-color:#847022;padding-top:9px;min-height:29px}
+.select-options div[hidden]{display:none}
+@media(max-width:380px){header{padding-left:0;padding-right:0;gap:5px}h1{font-size:15px}.brand small{font-size:8px;letter-spacing:1px}.mode-control{gap:4px}.mode-label{font-size:9px}.model{font-size:9px;padding:4px}.mode-switch{width:39px;height:23px}.mode-switch:after{width:15px;height:15px}.mode-switch[aria-checked="true"]:after{transform:translateX(16px)}}
 </style></head><body>
 <div class="app">
-  <header><div class="brand"><h1>舒尔特表</h1><small>SCHULTE POCKET</small></div><a class="model" href="./index.html" style="color:inherit;text-decoration:none;min-height:34px;display:flex;align-items:center" aria-label="返回游戏菜单">← 菜单</a></header>
+  <header><div class="brand"><h1>舒尔特表</h1><small>SCHULTE POCKET</small></div><div class="mode-control"><span class="mode-label" id="modeLabel">经典 / 漂浮</span><button type="button" class="mode-switch" id="modeSwitch" role="switch" aria-checked="false" aria-label="漂浮模式" title="切换经典或漂浮模式"></button></div><a class="model" href="./index.html" style="color:inherit;text-decoration:none;min-height:34px;display:flex;align-items:center" aria-label="返回游戏菜单">← 菜单</a></header>
   <div class="screen-bezel"><main class="screen">
+    <div id="driftArena" aria-label="漂浮数字活动区"></div>
     <div class="screen-top"><div class="screen-title">NUMBER SEARCH<small>按顺序点击数字</small></div><button type="button" class="timer-unit" id="toggleTimer" aria-label="隐藏计时" aria-pressed="false" title="点击隐藏或显示计时"><span class="label">TIME</span><span class="value" id="timer" aria-label="用时">0.00</span></button></div>
     <div class="playfield">
       <div class="board-wrapper" id="boardWrapper"><div class="board" id="board" aria-label="舒尔特数字棋盘"></div></div>
@@ -70,6 +84,7 @@ body{padding:16.8px 11.2px 36px}
     <div class="screen-caption"><span>START AT 01</span><span>FOCUS · FIND · TAP</span></div>
     <div class="best-summary"><span class="best-label">BEST / 历史最佳</span><div id="bestRecord" class="empty">暂无记录</div></div>
   </main></div>
+  <div id="driftHud" hidden></div>
   <div class="controls"><div class="control-group"><span>GRID / 尺寸</span><div class="custom-select" id="sizeSelect"><button type="button" class="select-trigger" id="selectTrigger" aria-label="选择棋盘尺寸">5 × 5</button><div class="select-options" id="selectOptions"><div data-size="3">3 × 3</div><div data-size="4">4 × 4</div><div data-size="5" class="selected">5 × 5</div><div data-size="6">6 × 6</div><div data-size="7">7 × 7</div></div></div></div><div class="control-group"><span>RESET / 新一局</span><button id="restart" class="pixel-btn" type="button">重新开始</button></div></div>
   <div class="footer-actions"><span>• SCHULTE TRAINER</span><button id="viewRecords" class="pixel-btn" type="button">查看记录</button></div>
 </div>
@@ -84,6 +99,94 @@ body{padding:16.8px 11.2px 36px}
 </dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
+
+class DriftField {
+  constructor(arena, numbers, onHit) {
+    this.arena = arena;
+    this.onHit = onHit;
+    this.balls = [];
+    this.raf = 0;
+    this.last = 0;
+    this.running = true;
+    this.resize = () => this.layout();
+    arena.innerHTML = '';
+    numbers.forEach(n => {
+      const el = document.createElement('button');
+      el.type = 'button'; el.className = 'drift-ball';
+      el.textContent = n; el.dataset.n = n;
+      el.setAttribute('aria-label', '数字 ' + n);
+      // Pointerdown judges the number before it can drift away from the finger.
+      el.addEventListener('pointerdown', e => {
+        if (e.button !== 0 || !e.isPrimary) return;
+        e.preventDefault(); onHit({currentTarget: el});
+      });
+      el.addEventListener('click', e => {
+        if (e.detail === 0 && !el.disabled) onHit({currentTarget: el});
+      });
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 18 + Math.random() * 10;
+      this.balls.push({n, el, x:0, y:0, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed});
+      arena.appendChild(el);
+    });
+    this.layout();
+    this.observer = new ResizeObserver(this.resize);
+    this.observer.observe(arena);
+    this.frame = now => {
+      if (!this.running) return;
+      const dt = this.last ? Math.min((now-this.last)/1000, .035) : 0;
+      this.last = now;
+      this.step(dt); this.paint();
+      this.raf = requestAnimationFrame(this.frame);
+    };
+    this.raf = requestAnimationFrame(this.frame);
+  }
+  layout() {
+    const w = this.arena.clientWidth, h = this.arena.clientHeight;
+    if (!w || !h) return;
+    this.w = w; this.h = h;
+    const cols = Math.ceil(Math.sqrt(this.balls.length || 1));
+    this.d = Math.min(54, (w-16)/cols*.76, (h-16)/cols*.76);
+    const rows = Math.ceil(this.balls.length/cols);
+    this.balls.forEach((b,i) => {
+      b.x = (i%cols+.5)*w/cols-this.d/2;
+      b.y = (Math.floor(i/cols)+.5)*h/rows-this.d/2;
+      b.el.style.width = b.el.style.height = this.d+'px';
+      b.el.style.fontSize = Math.min(25, this.d*.47)+'px';
+    });
+    this.paint(); this.resetClock();
+  }
+  step(dt) {
+    const d = this.d, maxX=this.w-d, maxY=this.h-d;
+    if (!(maxX>0 && maxY>0)) return;
+    const clamp = b => {
+      if(b.x<0){b.x=0;b.vx=Math.abs(b.vx)}
+      if(b.x>maxX){b.x=maxX;b.vx=-Math.abs(b.vx)}
+      if(b.y<0){b.y=0;b.vy=Math.abs(b.vy)}
+      if(b.y>maxY){b.y=maxY;b.vy=-Math.abs(b.vy)}
+    };
+    this.balls.forEach(b=>{b.x+=b.vx*dt;b.y+=b.vy*dt;clamp(b)});
+    // Equal-size circles gently bounce and separate instead of covering each other.
+    for(let pass=0;pass<5;pass++) {
+      for(let i=0;i<this.balls.length;i++) for(let j=i+1;j<this.balls.length;j++) {
+        const a=this.balls[i],b=this.balls[j];
+        const dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy);
+        if(dist>=d+2) continue;
+        const nx=dist ? dx/dist : 1, ny=dist ? dy/dist : 0;
+        const push=(d+2-dist)/2;
+        a.x-=nx*push;a.y-=ny*push;b.x+=nx*push;b.y+=ny*push;
+        const closing=(a.vx-b.vx)*nx+(a.vy-b.vy)*ny;
+        if(closing>0){a.vx-=closing*nx;a.vy-=closing*ny;b.vx+=closing*nx;b.vy+=closing*ny}
+      }
+      this.balls.forEach(clamp);
+    }
+  }
+  paint(){this.balls.forEach(b=>b.el.style.transform='translate('+b.x+'px,'+b.y+'px)')}
+  remove(n){const i=this.balls.findIndex(b=>b.n===n);if(i>=0){this.balls[i].el.remove();this.balls.splice(i,1)}}
+  resetClock(){this.last=0}
+  stop(){this.running=false;cancelAnimationFrame(this.raf)}
+  destroy(){this.stop();this.observer.disconnect();this.arena.innerHTML=''}
+}
+
 (function () {
   'use strict';
 
@@ -111,7 +214,17 @@ body{padding:16.8px 11.2px 36px}
   const clearBtn = document.getElementById('clearRecords');
   const toastEl = document.getElementById('toast');
 
+  let mode = 'classic';
   let size = 5;
+  let drift = null;
+  const arena = document.getElementById('driftArena');
+  const driftHud = document.getElementById('driftHud');
+  const modeSwitch = document.getElementById('modeSwitch');
+  const statsEl = document.querySelector('.stats');
+  const bestSummary = document.querySelector('.best-summary');
+  const classicScreenTop = document.querySelector('.screen-top');
+  const classicPlayfield = document.querySelector('.playfield');
+  const classicScreen = document.querySelector('.screen');
   let total = size * size;
   let next = 1;
   let errors = 0;
@@ -181,9 +294,11 @@ body{padding:16.8px 11.2px 36px}
   }
 
   /* ---------- 记录存储 ---------- */
+  function storageKey() { return mode === 'drift' ? 'schulte-records-drift-v1' : STORAGE_KEY; }
+
   function loadRecords() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(storageKey());
       const arr = raw ? JSON.parse(raw) : [];
       return Array.isArray(arr) ? arr.filter(r => r && typeof r.ms === 'number') : [];
     } catch (e) { return []; }
@@ -200,12 +315,12 @@ body{padding:16.8px 11.2px 36px}
       kept.push.apply(kept, grouped[k].slice(0, MAX_RECORDS));
     });
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(kept));
+      localStorage.setItem(storageKey(), JSON.stringify(kept));
     } catch (e) { /* ignore */ }
   }
 
   function renderRecords() {
-    recordSizeLabel.textContent = size + ' × ' + size;
+    recordSizeLabel.textContent = (mode === 'drift' ? '漂浮 · ' : '') + size + ' × ' + size;
     const list = loadRecords()
       .filter(r => r.size === size)
       .sort((a, b) => a.ms - b.ms)
@@ -239,6 +354,7 @@ body{padding:16.8px 11.2px 36px}
   /* ---------- 游戏核心 ---------- */
   function newGame() {
     cancelAnimationFrame(rafId);
+    if (drift) { drift.destroy(); drift = null; }
     total = size * size;
     next = 1;
     errors = 0;
@@ -255,6 +371,12 @@ body{padding:16.8px 11.2px 36px}
     boardEl.style.setProperty('--size', size);
 
     const nums = shuffle(Array.from({ length: total }, (_, i) => i + 1));
+    if (mode === 'drift') {
+      boardEl.innerHTML = '';
+      drift = new DriftField(arena, nums, onCellClick);
+      renderRecords();
+      return;
+    }
     const frag = document.createDocumentFragment();
     
     nums.forEach(function (n) {
@@ -295,6 +417,7 @@ body{padding:16.8px 11.2px 36px}
 
     btn.classList.add('done');
     btn.disabled = true;
+    if (drift) drift.remove(n);
     next++;
 
     if (next > total) {
@@ -311,6 +434,7 @@ body{padding:16.8px 11.2px 36px}
 
   function finish() {
     finished = true;
+    if (drift) drift.stop();
     updateTimerVisibility(true);
     cancelAnimationFrame(rafId);
 
@@ -334,20 +458,46 @@ body{padding:16.8px 11.2px 36px}
     toast('通关！用时 ' + fmtSec(ms) + ' 秒' + achievement);
   }
 
+  /* ---------- 模式切换 ---------- */
+  modeSwitch.addEventListener('click', function () {
+    mode = mode === 'classic' ? 'drift' : 'classic';
+    const floating = mode === 'drift';
+    modeSwitch.setAttribute('aria-checked', String(floating));
+    document.querySelector('.app').classList.toggle('drift-mode', floating);
+    driftHud.hidden = !floating;
+    if (floating) {
+      driftHud.append(timerToggle, statsEl, bestSummary);
+      if (size > 5) size = 5;
+    } else {
+      classicScreenTop.appendChild(timerToggle);
+      classicPlayfield.appendChild(statsEl);
+      classicScreen.appendChild(bestSummary);
+    }
+    optionDivs.forEach(div => {
+      div.hidden = floating && Number(div.dataset.size) > 5;
+      div.classList.toggle('selected', Number(div.dataset.size) === size);
+    });
+    selectTrigger.textContent = size + ' × ' + size;
+    newGame();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (drift) drift.resetClock();
+  });
+
   /* ---------- 绑定 ---------- */
   restartBtn.addEventListener('click', newGame);
 
   clearBtn.addEventListener('click', function () {
     if (!confirm('确定清空 ' + size + '×' + size + ' 的记录吗？')) return;
     const kept = loadRecords().filter(r => r.size !== size);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(kept)); } catch (e) {}
+    try { localStorage.setItem(storageKey(), JSON.stringify(kept)); } catch (e) {}
     newRecordTs = 0;
     renderRecords();
     toast('已清空');
   });
 
   document.addEventListener('keydown', function (e) {
-    if (recordsDialog.open || e.target === timerToggle || timerToggle.contains(e.target)) return;
+    if (recordsDialog.open || e.target === timerToggle || timerToggle.contains(e.target) || e.target === modeSwitch) return;
     if (e.key === 'r' || e.key === 'R' || e.key === ' ') {
       if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
       e.preventDefault();
