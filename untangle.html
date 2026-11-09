@@ -44,7 +44,7 @@ function relaxGenerated(list){
 // Initial arrangement has no prior topology to preserve. Separate capsules before
 // entering the live solver, which subsequently preserves continuous motion.
 for(let pass=0;pass<24;pass++){
-for(const [A,B]of nearbyPairs(list,null,true)){const i=A.i,j=B.i;collide(A.a,A.b,B.a,B.b,i?1:0,i+1===N?0:1,j?1:0,j+1===N?0:1)}
+for(const [A,B]of nearbyPairs(list,null,true,true)){const i=A.i,j=B.i;collide(A.a,A.b,B.a,B.b,i?1:0,i+1===N?0:1,j?1:0,j+1===N?0:1)}
 for(const r of list)for(let i=1;i<N;i++){const p=r.p[i];p.x=Math.max(30,Math.min(570,p.x));p.y=Math.max(30,Math.min(570,p.y));p.z=Math.max(R,p.z)}
 }
 for(const r of list){let length=0;for(let i=0;i<=N;i++){const p=r.p[i];p.ox=p.x;p.oy=p.y;p.oz=p.z;if(i)length+=Math.hypot(p.x-r.p[i-1].x,p.y-r.p[i-1].y,p.z-r.p[i-1].z)}r.rest=length/N}
@@ -96,6 +96,7 @@ function resumeTimer(){if(played&&timed&&gameMode==='challenge'&&!won&&!generati
 function formatTime(ms){const seconds=Math.floor(ms/1000),m=Math.floor(seconds/60),sec=seconds%60;return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')}
 function markPlayed(){if(!played){played=true;resumeTimer();updateMode()}}
 function saveProgress(){if(!played||won||generating||!opening)return;try{localStorage.setItem(SAVE_PREFIX+gameMode,JSON.stringify({version:2,mode:gameMode,timed,played,assisted,elapsed:timerValue(),opening,state:pointer?pointer.snapshot:returning?returning.to:snapshot(),history:history.slice(-30)}))}catch{}}
+let pendingSave=0;function queueProgressSave(){clearTimeout(pendingSave);pendingSave=setTimeout(()=>{if(pointer||returning){queueProgressSave();return}saveProgress()},220)}
 function validState(s){return s&&Number.isInteger(s.count)&&s.count>=1&&s.count<=8&&Array.isArray(s.ropes)&&s.ropes.length===s.count&&Number.isFinite(s.moves)&&s.ropes.every(r=>Array.isArray(r.ends)&&r.ends.length===2&&r.ends.every(i=>Number.isInteger(i)&&i>=0&&i<24)&&Number.isFinite(r.rest)&&r.p?.length===49&&r.p.every(p=>['x','y','z','ox','oy','oz'].every(k=>Number.isFinite(p[k]))))&&new Set(s.ropes.filter(r=>!r.cleared).flatMap(r=>r.ends)).size===s.ropes.filter(r=>!r.cleared).length*2}
 function loadProgress(){const s=storageRead(SAVE_PREFIX+gameMode,null);if(!s||s.version!==2||s.mode!==gameMode||!s.played||!validState(s.state)||!validState(s.opening)||s.state.ropes.every(r=>r.cleared)||!Number.isFinite(s.elapsed)||s.elapsed<0||(gameMode==='challenge'&&s.state.count!==8))return false;timed=!!s.timed;played=true;assisted=!!s.assisted;elapsed=s.elapsed;timerStarted=0;opening=s.opening;history=(Array.isArray(s.history)?s.history:[]).filter(validState).slice(-30);restore(s.state);resumeTimer();update('已接着上次的进度 · 继续慢慢解');return true}
 function records(){const raw=storageRead(RECORD_KEY,[]);return (Array.isArray(raw)?raw:[]).filter(r=>r&&Number.isFinite(r.ms)&&r.ms>0&&typeof r.date==='string').sort((a,b)=>a.ms-b.ms).slice(0,5)}
@@ -124,7 +125,7 @@ batch();
 function reset(){if(generating||pointer)return;if(!opening){beginOpening(true);return}freshRound();history=[];guardStops=0;restore(opening)}
 function update(message){counter.textContent=moves+' 步';undoBtn.disabled=generating||!history.length;updateSlots()}
 function fixed(k,i){return i===0||i===N}
-function targets(k){let r=ropes[k];for(let end=0;end<2;end++){const p=r.p[end?N:0],h=holes[r.ends[end]];let target=drag&&drag.k===k&&drag.end===end?drag.target:{x:h.x,y:h.y,z:HOLEZ};let dx=target.x-p.x,dy=target.y-p.y,dz=target.z-p.z,d=Math.hypot(dx,dy,dz),f=Math.min(1,4/(d||1));p.x+=dx*f;p.y+=dy*f;p.z+=dz*f;p.ox=p.x;p.oy=p.y;p.oz=p.z}}
+function targets(k){let r=ropes[k];for(let end=0;end<2;end++){const p=r.p[end?N:0],h=holes[r.ends[end]];let target=drag&&drag.k===k&&drag.end===end?drag.target:{x:h.x,y:h.y,z:HOLEZ};let dx=target.x-p.x,dy=target.y-p.y,dz=target.z-p.z,d=Math.hypot(dx,dy,dz),f=Math.min(1,(drag&&drag.k===k&&drag.end===end?9:7)/(d||1));p.x+=dx*f;p.y+=dy*f;p.z+=dz*f;p.ox=p.x;p.oy=p.y;p.oz=p.z}}
 function collide(a,b,c,d,wa,wb,wc,wd){
 const ux=b.x-a.x,uy=b.y-a.y,uz=b.z-a.z,vx=d.x-c.x,vy=d.y-c.y,vz=d.z-c.z,wx=a.x-c.x,wy=a.y-c.y,wz=a.z-c.z;
 const A=ux*ux+uy*uy+uz*uz,B=ux*vx+uy*vy+uz*vz,C=vx*vx+vy*vy+vz*vz,D=ux*wx+uy*wy+uz*wz,E=vx*wx+vy*wy+vz*wz,den=A*C-B*B;
@@ -152,18 +153,18 @@ if(advance<1e-5)return Math.max(0,t-1e-4);
 if(t+advance>=limit)return limit;t+=advance;
 }return Math.max(0,t-1e-4);
 }
-function nearbyPairs(list,before=null,includeSelf=false){
+function nearbyPairs(list,before=null,includeSelf=false,spatial=false){
 const segments=[],grid=new Map(),pairs=[],seen=new Set(),cell=48,pad=SEP*.55;
 for(let k=0;k<list.length;k++)for(let i=0;i<N;i++){
 if(list[k].cleared)continue;const a=list[k].p[i],b=list[k].p[i+1],oldA=before?before[k][i]:a,oldB=before?before[k][i+1]:b,id=segments.length;
-segments.push({k,i,a,b});const x0=Math.floor((Math.min(a.x,b.x,oldA.x,oldB.x)-pad)/cell),x1=Math.floor((Math.max(a.x,b.x,oldA.x,oldB.x)+pad)/cell),y0=Math.floor((Math.min(a.y,b.y,oldA.y,oldB.y)-pad)/cell),y1=Math.floor((Math.max(a.y,b.y,oldA.y,oldB.y)+pad)/cell);
+segments.push({k,i,a,b,z0:Math.min(a.z,b.z,oldA.z,oldB.z)-pad,z1:Math.max(a.z,b.z,oldA.z,oldB.z)+pad});const x0=Math.floor((Math.min(a.x,b.x,oldA.x,oldB.x)-pad)/cell),x1=Math.floor((Math.max(a.x,b.x,oldA.x,oldB.x)+pad)/cell),y0=Math.floor((Math.min(a.y,b.y,oldA.y,oldB.y)-pad)/cell),y1=Math.floor((Math.max(a.y,b.y,oldA.y,oldB.y)+pad)/cell);
 for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){const key=x+','+y;let bucket=grid.get(key);if(!bucket){bucket=[];grid.set(key,bucket)}
-for(const other of bucket){const old=segments[other];if(old.k===k&&(!includeSelf||Math.abs(old.i-i)<Math.max(3,Math.ceil(SEP*1.6/list[k].rest))))continue;const code=other*10000+id;if(seen.has(code))continue;seen.add(code);pairs.push([old,segments[id]])}bucket.push(id)}
+for(const other of bucket){const old=segments[other];if(spatial&&(old.z1<segments[id].z0||old.z0>segments[id].z1))continue;if(old.k===k&&(!includeSelf||Math.abs(old.i-i)<Math.max(3,Math.ceil(SEP*1.6/list[k].rest))))continue;const code=other*10000+id;if(seen.has(code))continue;seen.add(code);pairs.push([old,segments[id]])}bucket.push(id)}
 }return pairs;
 }
 function preserveLocalContacts(before,after){
 for(let pass=0;pass<4;pass++){
-let changed=false;for(const [A,B]of nearbyPairs(after,before)){const k=A.k,i=A.i,l=B.k,j=B.i;
+let changed=false;for(const [A,B]of nearbyPairs(after,before,false,true)){const k=A.k,i=A.i,l=B.k,j=B.i;
 const old=[before[k][i],before[k][i+1],before[l][j],before[l][j+1]],next=[after[k].p[i],after[k].p[i+1],after[l].p[j],after[l].p[j+1]],fraction=pairMotionFraction(old,next);
 if(fraction>=1)continue;changed=true;guardStops++;
 for(let n=0;n<4;n++){const p=next[n],q=old[n];p.x=q.x+(p.x-q.x)*fraction;p.y=q.y+(p.y-q.y)*fraction;p.z=q.z+(p.z-q.z)*fraction;p.ox=p.x;p.oy=p.y;p.oz=p.z}
@@ -172,7 +173,7 @@ for(let n=0;n<4;n++){const p=next[n],q=old[n];p.x=q.x+(p.x-q.x)*fraction;p.y=q.y
 }
 function motionFraction(before,after){
 let fraction=1;
-for(const [A,B]of nearbyPairs(after,before)){const k=A.k,i=A.i,l=B.k,j=B.i;
+for(const [A,B]of nearbyPairs(after,before,false,true)){const k=A.k,i=A.i,l=B.k,j=B.i;
 const old=[before[k][i],before[k][i+1],before[l][j],before[l][j+1]],next=[after[k].p[i],after[k].p[i+1],after[l].p[j],after[l].p[j+1]];
 fraction=Math.min(fraction,pairMotionFraction(old,next,fraction));
 }
@@ -200,7 +201,7 @@ if(iter<4)for(let i=1;i<N;i++){const p=r.p[i],a=r.p[i-1],b=r.p[i+1];p.x+=((a.x+b
 for(let n=0;n<N;n++){const i=iter%2?N-1-n:n,a=r.p[i],b=r.p[i+1],dx=b.x-a.x,dy=b.y-a.y,dz=b.z-a.z,d=Math.hypot(dx,dy,dz),wa=i===0?0:1,wb=i+1===N?0:1;
 if(d<=r.rest)continue;const f=(d-r.rest)/(d||1)/(wa+wb)*.97;a.x+=dx*f*wa;a.y+=dy*f*wa;a.z+=dz*f*wa;b.x-=dx*f*wb;b.y-=dy*f*wb;b.z-=dz*f*wb}
 }
-for(const [A,B]of nearbyPairs(ropes,null,true)){const i=A.i,j=B.i;collide(A.a,A.b,B.a,B.b,i?1:0,i+1===N?0:1,j?1:0,j+1===N?0:1)}
+for(const [A,B]of nearbyPairs(ropes,null,true,true)){const i=A.i,j=B.i;collide(A.a,A.b,B.a,B.b,i?1:0,i+1===N?0:1,j?1:0,j+1===N?0:1)}
 for(let k=0;k<ropeCount;k++)for(let i=1;i<N;i++){if(ropes[k].cleared)continue;const p=ropes[k].p[i];p.z=Math.max(R,p.z);p.x=Math.max(27,Math.min(573,p.x));p.y=Math.max(27,Math.min(573,p.y))}
 }
 preserveLocalContacts(previous,ropes);
@@ -232,17 +233,31 @@ gl.attachShader(program,shader(gl.FRAGMENT_SHADER,`precision mediump float;varyi
 gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));gl.useProgram(program);
 const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
 for(const [name,offset]of [['aPosition',0],['aNormal',12]]){const at=gl.getAttribLocation(program,name);gl.enableVertexAttribArray(at);gl.vertexAttribPointer(at,3,gl.FLOAT,false,24,offset)}
-const colorLoc=gl.getUniformLocation(program,'uColor'),RAD=12;let vertices=new Float32Array(0);gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LESS);gl.clearColor(0,0,0,0);
-const normalize=(v)=>{const d=Math.hypot(...v)||1;return v.map(x=>x/d)};
-function sample(p,t){const q=sampleRopePoint(p,t);return[q.x,q.y,q.z]}
+const colorLoc=gl.getUniformLocation(program,'uColor'),RAD=10;
+const circle=Array.from({length:RAD},(_,j)=>[Math.cos(j/RAD*Math.PI*2),Math.sin(j/RAD*Math.PI*2)]),vertexBuffers=new Map();let rings=new Float32Array(0);
+gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LESS);gl.clearColor(0,0,0,0);
 return()=>{gl.viewport(0,0,1200,1200);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+// Keep physical rope resolution unchanged; reduce only the drawing mesh while moving.
+const density=drag||returning?2:3;
 for(let k=0;k<ropeCount;k++){
-if(ropes[k].cleared)continue;const last=ropes[k].p.length-1,SAMPLES=last*3,required=SAMPLES*RAD*6*6;if(vertices.length!==required)vertices=new Float32Array(required);const rings=[];for(let i=0;i<=SAMPLES;i++){const t=i/3,c=sample(ropes[k].p,t),a=sample(ropes[k].p,t-.05),b=sample(ropes[k].p,t+.05),v=normalize(b.map((x,j)=>x-a[j])),u=normalize([-v[1],v[0],0]),w=[v[1]*u[2]-v[2]*u[1],v[2]*u[0]-v[0]*u[2],v[0]*u[1]-v[1]*u[0]];
-const ring=[];for(let j=0;j<RAD;j++){const a=j/RAD*Math.PI*2,n=u.map((x,l)=>x*Math.cos(a)+w[l]*Math.sin(a));ring.push([...c.map((x,l)=>x+n[l]*R),...n])}rings.push(ring)}
-let at=0;for(let i=0;i<SAMPLES;i++)for(let j=0;j<RAD;j++){const a=rings[i][j],b=rings[i+1][j],c=rings[i+1][(j+1)%RAD],d=rings[i][(j+1)%RAD];for(const v of[a,b,c,a,c,d]){vertices.set(v,at);at+=6}}
+if(ropes[k].cleared)continue;const points=ropes[k].p,last=points.length-1,SAMPLES=last*density,required=SAMPLES*RAD*6*6;
+let vertices=vertexBuffers.get(required);if(!vertices){vertices=new Float32Array(required);vertexBuffers.set(required,vertices)}
+if(rings.length<(SAMPLES+1)*RAD*6)rings=new Float32Array((SAMPLES+1)*RAD*6);
+for(let i=0;i<=SAMPLES;i++){
+const t=i/density,c=sampleRopePoint(points,t),a=sampleRopePoint(points,t-.05),b=sampleRopePoint(points,t+.05);
+let vx=b.x-a.x,vy=b.y-a.y,vz=b.z-a.z;const length=Math.hypot(vx,vy,vz)||1;vx/=length;vy/=length;vz/=length;
+const planar=Math.hypot(vx,vy),ux=planar>1e-6?-vy/planar:1,uy=planar>1e-6?vx/planar:0,wx=-vz*uy,wy=vz*ux,wz=vx*uy-vy*ux;
+for(let j=0;j<RAD;j++){const [cs,sn]=circle[j],nx=ux*cs+wx*sn,ny=uy*cs+wy*sn,nz=wz*sn,offset=(i*RAD+j)*6;
+rings[offset]=c.x+nx*R;rings[offset+1]=c.y+ny*R;rings[offset+2]=c.z+nz*R;rings[offset+3]=nx;rings[offset+4]=ny;rings[offset+5]=nz}
+}
+let at=0;for(let i=0;i<SAMPLES;i++)for(let j=0;j<RAD;j++){
+const next=(j+1)%RAD,a=(i*RAD+j)*6,b=((i+1)*RAD+j)*6,c=((i+1)*RAD+next)*6,d=(i*RAD+next)*6;
+for(let v=0;v<6;v++){const offset=v===0||v===3?a:v===1?b:v===5?d:c;for(let axis=0;axis<6;axis++)vertices[at++]=rings[offset+axis]}
+}
 const hex=colors[k][0].slice(1);gl.uniform3f(colorLoc,parseInt(hex.slice(0,2),16)/255,parseInt(hex.slice(2,4),16)/255,parseInt(hex.slice(4,6),16)/255);gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.DYNAMIC_DRAW);gl.drawArrays(gl.TRIANGLES,0,at/6);
 }}
 }
+
 function createSoftwareTubeRenderer(){
 const W=480,S=W/600,rr=R*S;tubeCanvas.width=W;tubeCanvas.height=W;const surface=tubeCanvas.getContext('2d');if(!surface)return null;
 const image=surface.createImageData(W,W),pixels=image.data,depth=new Float32Array(W*W);
@@ -252,9 +267,9 @@ for(let angle=0;angle<128;angle++){const theta=angle/128*Math.PI*2,nx=-Math.sin(
 const sample=sampleRopePoint;
 return()=>{pixels.fill(0);depth.fill(-1e6);
 for(let k=0;k<ropeCount;k++){
-if(ropes[k].cleared)continue;const table=shades[k];let a=sample(ropes[k].p,0);
-for(let n=1;n<=(ropes[k].p.length-1)*3;n++){
-const b=sample(ropes[k].p,n/3),pa0=project(a),pb0=project(b),pa={x:pa0.x*S,y:pa0.y*S},pb={x:pb0.x*S,y:pb0.y*S},dx=pb.x-pa.x,dy=pb.y-pa.y,len2=dx*dx+dy*dy,invLen=1/Math.sqrt(len2||1),radius=rr+.7,angle=((Math.round(Math.atan2(dy,dx)/Math.PI/2*128)%128)+128)%128;
+if(ropes[k].cleared)continue;const table=shades[k],density=drag||returning?2:3;let a=sample(ropes[k].p,0);
+for(let n=1;n<=(ropes[k].p.length-1)*density;n++){
+const b=sample(ropes[k].p,n/density),pa0=project(a),pb0=project(b),pa={x:pa0.x*S,y:pa0.y*S},pb={x:pb0.x*S,y:pb0.y*S},dx=pb.x-pa.x,dy=pb.y-pa.y,len2=dx*dx+dy*dy,invLen=1/Math.sqrt(len2||1),radius=rr+.7,angle=((Math.round(Math.atan2(dy,dx)/Math.PI/2*128)%128)+128)%128;
 const left=Math.max(0,Math.floor(Math.min(pa.x,pb.x)-radius)),right=Math.min(W-1,Math.ceil(Math.max(pa.x,pb.x)+radius)),top=Math.max(0,Math.floor(Math.min(pa.y,pb.y)-radius)),bottom=Math.min(W-1,Math.ceil(Math.max(pa.y,pb.y)+radius));
 for(let y=top;y<=bottom;y++)for(let x=left;x<=right;x++){
 const px=x+.5,py=y+.5,t=Math.max(0,Math.min(1,((px-pa.x)*dx+(py-pa.y)*dy)/(len2||1))),rx=px-pa.x-t*dx,ry=py-pa.y-t*dy,d2=rx*rx+ry*ry;if(d2>radius*radius)continue;
@@ -271,7 +286,7 @@ canvas.dataset.renderer=tubeRenderer?'webgl-depth':'software-depth';if(!tubeRend
 function coords(e){let rect=canvas.getBoundingClientRect();return{x:(e.clientX-rect.left)*600/rect.width,y:(e.clientY-rect.top)*600/rect.height}}
 function nearestEnd(pos){let best=null,min=51;for(let k=ropeCount-1;k>=0;k--)for(let end=0;end<2;end++){if(ropes[k].cleared)continue;let p=project(ropes[k].p[end?N:0]),d=Math.hypot(p.x-pos.x,p.y-pos.y);if(d<min){min=d;best={k,end}}}return best}
 function emptyAt(pos){let best=-1,min=60;holes.forEach((h,i)=>{if(ropes.some(r=>!r.cleared&&r.ends.includes(i)))return;let d=Math.hypot(h.x-pos.x,h.y-4-pos.y);if(d<min){best=i;min=d}});return best}
-function drop(sel,h,snap){if(h<0)return;history.push(snap);ropes[sel.k].ends[sel.end]=h;moves++;won=false;quiet=0;toast.className='';selected=null;saveProgress();update('绳子正在松开…')}
+function drop(sel,h,snap){if(h<0)return;history.push(snap);ropes[sel.k].ends[sel.end]=h;moves++;won=false;quiet=0;toast.className='';selected=null;update('绳子正在松开…')}
 function dragTarget(pos){return{x:Math.max(30,Math.min(570,pos.x-pointer.offset.x)),y:Math.max(30,Math.min(570,pos.y-pointer.offset.y+32*.52)),z:32}}
 canvas.addEventListener('pointerdown',e=>{
 if(generating||pointer||returning||won)return;const pos=coords(e),hit=nearestEnd(pos);if(!hit)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);
@@ -285,17 +300,17 @@ if(Math.hypot(pos.x-pointer.pos.x,pos.y-pointer.pos.y)>3){pointer.moved=true;mar
 drag.target=dragTarget(pos);hoverHole=emptyAt(project(drag.target));
 });
 function returnTo(snap,moved){if(!moved){restore(snap);return}returning={start:performance.now(),from:snapshot(),to:snap};quiet=0}
-function animateReturn(now){const t=Math.min(1,(now-returning.start)/320),ease=t*t*(3-2*t);for(let k=0;k<ropeCount;k++)for(let i=0;i<=N;i++){const p=ropes[k].p[i],a=returning.from.ropes[k].p[i],b=returning.to.ropes[k].p[i];for(const axis of ['x','y','z'])p[axis]=a[axis]+(b[axis]-a[axis])*ease;p.ox=p.x;p.oy=p.y;p.oz=p.z}if(t>=1){const snap=returning.to;restore(snap);saveProgress()}}
+function animateReturn(now){const t=Math.min(1,(now-returning.start)/180),ease=t*t;for(let k=0;k<ropeCount;k++)for(let i=0;i<=N;i++){const p=ropes[k].p[i],a=returning.from.ropes[k].p[i],b=returning.to.ropes[k].p[i];for(const axis of ['x','y','z'])p[axis]=a[axis]+(b[axis]-a[axis])*ease;p.ox=p.x;p.oy=p.y;p.oz=p.z}if(t>=1){const snap=returning.to;restore(snap);saveProgress()}}
 function endPointer(e,cancel=false){
 if(!pointer||e.pointerId!==pointer.id)return;e.preventDefault();const old=pointer,sel=selected,pos=coords(e),target=dragTarget(pos),dest=emptyAt(project(target));
 pointer=null;drag=null;selected=null;hoverHole=-1;canvas.style.cursor='grab';
 if(!cancel&&old.moved&&dest>=0){drop(sel,dest,old.snapshot);update('松手吸附，绳子正在收紧')}
 else{returnTo(old.snapshot,old.moved);update(old.moved?'没放进空孔，绳头正在回位':'按住绳头拖动，松手放入空孔')}
-saveProgress();
+queueProgressSave();
 if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);
 }
 canvas.addEventListener('pointerup',e=>endPointer(e));canvas.addEventListener('pointercancel',e=>endPointer(e,true));
-canvas.addEventListener('lostpointercapture',e=>{if(pointer&&e.pointerId===pointer.id){const old=pointer;pointer=null;drag=null;selected=null;hoverHole=-1;returnTo(old.snapshot,old.moved);saveProgress();canvas.style.cursor='grab'}});
+canvas.addEventListener('lostpointercapture',e=>{if(pointer&&e.pointerId===pointer.id){const old=pointer;pointer=null;drag=null;selected=null;hoverHole=-1;returnTo(old.snapshot,old.moved);queueProgressSave();canvas.style.cursor='grab'}});
 canvas.style.cursor='grab';
 root.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>{const next=button.dataset.mode;root.querySelector('#mode-picker').open=false;if(next===gameMode||generating||pointer||returning)return;pauseTimer();saveProgress();gameMode=next;opening=null;history=[];played=false;elapsed=0;assisted=false;won=false;ropeCount=next==='challenge'?8:5;N=48;if(!loadProgress()){updateMode();beginOpening()}});
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('#mode-picker'))root.querySelector('#mode-picker').open=false});document.addEventListener('keydown',e=>{if(e.key==='Escape')root.querySelector('#mode-picker').open=false});
@@ -331,8 +346,8 @@ new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(visible&
 function startLoop(){if(rafId||document.hidden||!visible)return;prev=0;rafId=requestAnimationFrame(loop)}
 function stopLoop(){if(rafId){cancelAnimationFrame(rafId);rafId=0}prev=0}
 document.addEventListener('visibilitychange',()=>{if(document.hidden){lastHidden=performance.now();pauseTimer();saveProgress();stopLoop()}else{const hiddenFor=performance.now()-lastHidden;if(hiddenFor>120){for(const r of ropes)for(const p of r.p){p.ox=p.x;p.oy=p.y;p.oz=p.z}}resumeTimer();startLoop()}});
-window.addEventListener('pagehide',()=>{pauseTimer();saveProgress();stopLoop()},{passive:true});window.addEventListener('pageshow',()=>{resumeTimer();startLoop()},{passive:true});setInterval(()=>{root.querySelector('#timer').textContent='TIME：'+formatTime(timerValue());saveProgress()},1000);
-function loop(t){rafId=0;if(document.hidden||!visible)return;if(!generating&&t-prev>16.7){const started=performance.now();if(returning)animateReturn(t);else physics();if(frames%8===0)checkCleared(t);draw();if(frames%60===0)canvas.dataset.frameMs=(performance.now()-started).toFixed(1);prev=t;frames++}rafId=requestAnimationFrame(loop)}renderRecords();if(!loadProgress()){updateMode();reset()}startLoop();
+window.addEventListener('pagehide',()=>{pauseTimer();saveProgress();stopLoop()},{passive:true});window.addEventListener('pageshow',()=>{resumeTimer();startLoop()},{passive:true});let lastAutosave=0;setInterval(()=>{root.querySelector('#timer').textContent='TIME：'+formatTime(timerValue());const now=performance.now();if(!pointer&&!returning&&now-lastAutosave>=5000){lastAutosave=now;saveProgress()}},1000);
+function loop(t){rafId=0;if(document.hidden||!visible)return;const frameInterval=1000/60,delta=t-prev;if(!generating&&delta>=frameInterval-.5){const started=performance.now();if(returning)animateReturn(t);else physics();if(frames%8===0)checkCleared(t);draw();if(frames%60===0)canvas.dataset.frameMs=(performance.now()-started).toFixed(1);prev=t-(delta>=frameInterval?delta%frameInterval:0);frames++}rafId=requestAnimationFrame(loop)}renderRecords();if(!loadProgress()){updateMode();reset()}startLoop();
 window.ropeGame={snapshot,reset,intersections,ropeCrossings,checkCleared,makeOpening,physics,minimumSeparation,motionFraction,get guardStops(){return guardStops},get holes(){return holes},get ropes(){return ropes},get moves(){return moves},get selected(){return selected}};
 })();
 </script></body></html>
