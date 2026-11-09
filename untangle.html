@@ -2,8 +2,10 @@
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>解绳 · 越缠越有趣</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f2efe8;color:#343e3a;font-family:system-ui,-apple-system,"PingFang SC",sans-serif}#rope-game{max-width:660px;margin:auto;padding:26px 18px 22px}.eyebrow{font-size:11px;letter-spacing:3px;color:#698077}.heading{display:flex;align-items:center;justify-content:space-between;gap:12px}h1{font-size:27px;font-weight:550;margin:8px 0 4px;letter-spacing:2px}.edition{font-size:12px;border:1px solid #c6d2c9;border-radius:30px;padding:7px 12px;white-space:nowrap;color:#5c766a}.subtitle{font-size:13px;color:#7a8279;margin:8px 0 12px}.mode-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 4px 4px;font-size:13px;color:#60796c}.mode-row label{display:flex;align-items:center;gap:9px}.mode-row select{font:inherit;font-size:16px;min-height:44px;padding:6px 12px;border:1px solid #c6d2c9;border-radius:10px;background:#faf9f4;color:#475b51}.mode-row span{font-size:12px}.playfield{position:relative}canvas{display:block;width:100%;height:auto;aspect-ratio:1;touch-action:none;user-select:none}.statusbar{display:flex;justify-content:space-between;align-items:center;font-size:13px;gap:10px;margin:4px 8px 18px}.dot{width:7px;height:7px;background:#759588;display:inline-block;border-radius:50%;margin-right:7px}#count{font-variant-numeric:tabular-nums;color:#6e7a70}.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.actions button{flex:1;min-height:46px;border:1px solid #cdd3c8;border-radius:13px;background:#faf9f4;color:#475b51;font:inherit;font-size:14px;cursor:pointer}.actions button:first-child{background:#486b5a;color:#fff;border-color:#486b5a}button:disabled{opacity:.4;cursor:default}button:focus-visible{outline:3px solid #c3906b;outline-offset:3px}.help{margin:16px 4px 0;text-align:center;font-size:12px;color:#85897f;line-height:1.8}#toast{position:absolute;bottom:9%;left:50%;transform:translateX(-50%);background:#345b4c;color:white;padding:12px 19px;border-radius:40px;font-size:14px;white-space:nowrap;box-shadow:0 6px 22px #223b3420;display:none}#toast.show{display:block}@media(max-width:380px){#rope-game{padding:18px 10px}h1{font-size:24px}.edition{font-size:11px;padding:6px 9px}}
-.game-home{max-width:660px;margin:0 auto;padding:14px 18px 0;display:flex;justify-content:flex-end}.game-home a{font-size:12px;min-height:34px;display:flex;align-items:center;color:#5c766a;text-decoration:none;border:1px solid #c6d2c9;border-radius:30px;padding:5px 12px}.game-home a:focus-visible{outline:2px solid #486b5a;outline-offset:3px}#rope-game{padding-top:10px}</style></head><body>
-<nav class="game-home" aria-label="游戏导航"><a href="./index.html">← 返回菜单</a></nav><main id="rope-game"><div class="eyebrow">UNTANGLE / 慢慢解开</div><div class="heading"><h1>八根，来点难度。</h1><span class="edition">06 · 全新乱结</span></div><p class="subtitle">把绳头挪到空孔，让缠在一起的绳子各归各位。</p><div class="mode-row"><label for="rope-mode">绳子数量 <select id="rope-mode"><option value="3">3 根</option><option value="5">5 根</option><option value="8" selected>8 根</option></select></label><span id="slots">16 个绳头 · 8 个空孔</span></div><div class="playfield"><canvas id="board" width="1200" height="1200" aria-label="八条绳子的解缠棋盘，按住彩色绳头拖至灰色空孔。"></canvas><div id="toast" role="status">解开了！再来一局？</div></div><div class="statusbar"><span id="status" aria-live="polite"><i class="dot"></i>选一个绳头，挪到空孔</span><span id="count">0 步</span></div><div class="actions"><button id="reset">重玩本局</button><button id="shuffle">随机开局</button><button id="undo" disabled>撤销一步</button><button id="demo">看解开效果</button></div><p class="help">按住绳头直接拖动，靠近空孔松手吸附<br>完全解开的绳子会自动消失，腾出孔位</p></main>
+.game-home{max-width:660px;margin:0 auto;padding:14px 18px 0;display:flex;justify-content:flex-end}.game-home a{font-size:12px;min-height:34px;display:flex;align-items:center;color:#5c766a;text-decoration:none;border:1px solid #c6d2c9;border-radius:30px;padding:5px 12px}.game-home a:focus-visible{outline:2px solid #486b5a;outline-offset:3px}#rope-game{padding-top:10px}
+.mode-row{flex-wrap:wrap;margin:14px 0 8px}.mode-picker{position:relative}.mode-picker summary{list-style:none;cursor:pointer;min-height:44px;border:1px solid #c6d2c9;border-radius:13px;background:#faf9f4;padding:10px 13px;color:#475b51;font-size:14px}.mode-picker summary::-webkit-details-marker{display:none}.mode-picker summary:after{content:'⌄';margin-left:16px}.mode-menu{position:absolute;top:calc(100% + 6px);left:0;z-index:5;min-width:164px;padding:5px;background:#faf9f4;border:1px solid #c6d2c9;border-radius:14px;box-shadow:0 8px 22px #345b4c20}.mode-menu button{display:block;width:100%;text-align:left;border:0;background:transparent;color:#475b51;border-radius:9px;padding:12px;font:inherit}.mode-menu button[aria-pressed=true]{background:#e2e9df;color:#345b4c}.round-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;flex-wrap:wrap}.segmented{display:flex;background:#e5e8de;border:1px solid #c6d2c9;border-radius:12px;padding:3px;gap:3px}.segmented button,.free-tools button{border:0;background:transparent;color:#5c766a;font:inherit;font-size:12px;min-height:38px;padding:8px 12px;border-radius:9px;cursor:pointer}.segmented button[aria-pressed=true]{background:#faf9f4;color:#345b4c;box-shadow:0 1px 4px #345b4c16}.free-tools{display:flex;gap:8px}.free-tools button{border:1px solid #c6d2c9;background:#faf9f4}#timer{font-variant-numeric:tabular-nums;font-size:15px;color:#486b5a}.records{margin-top:18px;border:1px solid #cdd3c8;background:#faf9f4;border-radius:13px;padding:12px 14px;font-size:12px;color:#60796c}.records summary{cursor:pointer}.records ol{padding-left:24px;margin-bottom:2px}.records li{padding:8px 0}.record-row{display:flex;justify-content:space-between;gap:10px}.record-row time{color:#85897f;font-size:11px}[hidden]{display:none!important}button,summary{-webkit-tap-highlight-color:transparent}summary:focus-visible{outline:3px solid #c3906b;outline-offset:3px}
+</style></head><body>
+<nav class="game-home" aria-label="游戏导航"><a href="./index.html">← 返回菜单</a></nav><main id="rope-game"><div class="eyebrow">UNTANGLE / 慢慢解开</div><div class="heading"><h1>八根，来点难度。</h1><span class="edition">06 · 全新乱结</span></div><p class="subtitle">把绳头挪到空孔，让缠在一起的绳子各归各位。</p><div class="mode-row"><span>模式选择</span><details class="mode-picker" id="mode-picker"><summary id="mode-label">八根闯关</summary><div class="mode-menu"><button type="button" data-mode="challenge" aria-pressed="true">八根闯关</button><button type="button" data-mode="free" aria-pressed="false">自由模式</button></div></details><span id="slots">16 个绳头 · 8 个空孔</span></div><div class="round-tools"><div class="segmented" id="timing-options" aria-label="闯关计时方式"><button id="timed" aria-pressed="true">计时挑战</button><button id="untimed" aria-pressed="false">不计时</button></div><div class="free-tools" id="free-tools" hidden><button id="add-rope">＋ 添加绳子</button><button id="remove-rope">− 删除绳子</button></div><span id="timer">00:00.0</span></div><div class="playfield"><canvas id="board" width="1200" height="1200" aria-label="八条绳子的解缠棋盘，按住彩色绳头拖至灰色空孔。"></canvas><div id="toast" role="status">解开了！再来一局？</div></div><div class="statusbar"><span id="status" aria-live="polite"><i class="dot"></i>选一个绳头，挪到空孔</span><span id="count">0 步</span></div><div class="actions"><button id="reset">重玩本局</button><button id="shuffle">随机开局</button><button id="undo" disabled>撤销一步</button><button id="demo">看解开效果</button></div><p class="help" id="help">按住绳头直接拖动，靠近空孔松手吸附<br>完全解开的绳子会自动消失，腾出孔位</p><details class="records" id="records"><summary>计时挑战 · 最快五次</summary><ol id="record-list"></ol><p>首次拖动开始计时，离开页面暂停。效果展示不计成绩。</p></details></main>
 <script>
 (()=>{
 const root=document.getElementById('rope-game'),canvas=root.querySelector('#board'),baseCtx=canvas.getContext('2d');let ctx=baseCtx;
@@ -12,7 +14,10 @@ for(const layer of [tubeCanvas,knobCanvas]){layer.width=1200;layer.height=1200;l
 const knobCtx=knobCanvas.getContext('2d');root.querySelector('#toast').style.zIndex=3;
 
 const status=root.querySelector('#status'),counter=root.querySelector('#count'),undoBtn=root.querySelector('#undo'),toast=root.querySelector('#toast');
-let ropeCount=8,N=48;const R=8.1,SEP=R*2+.7,HOLEZ=10;
+const prefs=storageRead('vespera-untangle-preferences-v2',{});
+let gameMode=prefs.mode==='free'?'free':'challenge',timed=prefs.timed!==false,played=false,assisted=false,recorded=false,elapsed=0,timerStarted=0,returning=false;
+const SAVE_PREFIX='vespera-untangle-progress-v2-',RECORD_KEY='vespera-untangle-records-v2';
+let ropeCount=gameMode==='free'?5:8,N=48;const R=8.1,SEP=R*2+.7,HOLEZ=10;
 const colors=[['#087bd4','#41c5ff','#004c8d'],['#dd528e','#ffacd1','#963055'],['#dfa341','#ffe49b','#9d681f'],['#238c6b','#7ce2ae','#105344'],['#8854c9','#d3adff','#52327d'],['#e16440','#ffb994','#963e27'],['#24a7b5','#98f4f1','#17616b'],['#9aa42b','#edf394','#5b6518']];
 const holes=[];for(let x=140;x<=460;x+=80)holes.push({x,y:60});for(let y=140;y<=460;y+=80)holes.push({x:540,y});for(let x=460;x>=140;x-=80)holes.push({x,y:540});for(let y=460;y>=140;y-=80)holes.push({x:60,y});holes.push({x:140,y:140},{x:460,y:140},{x:460,y:460},{x:140,y:460});
 let generating=false,generationSerial=0,opening=null,guardStops=0,ropes=[],history=[],moves=0,selected=null,drag=null,pointer=null,hoverHole=-1,demoMode=false,won=false,quiet=0;
@@ -25,7 +30,7 @@ for(let y=0;y<600;y+=22)for(let x=0;x<600;x+=25){const xx=x+(y%44?12:0),j=()=>ra
 function project(p){return{x:p.x,y:p.y-p.z*.52}}
 function point(x,y,z=10){return{x,y,z,ox:x,oy:y,oz:z}}
 function snapshot(){return{count:ropeCount,ropes:ropes.map(r=>({ends:r.ends.slice(),rest:r.rest,cleared:!!r.cleared,p:r.p.map(p=>({...p}))})),moves,demoMode}}
-function restore(s){if(s.count){ropeCount=s.count;N=ropeCount===3?36:ropeCount===5?40:48}ropes=s.ropes.map((r,i)=>({...r,ends:r.ends.slice(),p:r.p.map(p=>({...p})),color:colors[i],freeSince:null}));moves=s.moves;demoMode=s.demoMode;selected=null;drag=null;pointer=null;won=false;quiet=0;toast.className='';updateSlots();update()}
+function restore(s){if(s.count){ropeCount=s.count;N=48}ropes=s.ropes.map((r,i)=>({...r,ends:r.ends.slice(),p:r.p.map(p=>({...p})),color:colors[i],freeSince:null}));moves=s.moves;demoMode=s.demoMode;selected=null;drag=null;pointer=null;returning=false;won=false;quiet=0;toast.className='';updateMode();update()}
 function shuffled(values){const result=values.slice();for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]]}return result}
 function relaxGenerated(list){
 // Initial arrangement has no prior topology to preserve. Separate capsules before
@@ -65,21 +70,45 @@ return{count:ropeCount,ropes:result,moves:0,demoMode:false,word:{type:'random-ro
 }
 function updateSlots(){const cleared=ropes.filter(r=>r.cleared).length,active=ropeCount-cleared;root.querySelector('#slots').textContent=cleared?'已解开 '+cleared+'/'+ropeCount+' · '+(24-active*2)+' 个空孔':(active*2)+' 个绳头 · '+(24-active*2)+' 个空孔';canvas.dataset.cleared=String(cleared)}
 function updateMode(){
-root.querySelector('h1').textContent=ropeCount===3?'三根，刚刚好。':ropeCount===5?'五根，有点意思。':'八根，来点难度。';
-root.querySelector('.edition').textContent='06 · '+ropeCount+' 根乱结';updateSlots();canvas.setAttribute('aria-label',ropeCount+'根绳子的解缠棋盘，按住彩色绳头拖至灰色空孔。');
+try{localStorage.setItem('vespera-untangle-preferences-v2',JSON.stringify({mode:gameMode,timed}))}catch{}
+root.querySelector('h1').textContent=gameMode==='free'?'自由，慢慢玩。':'八根，来点难度。';
+root.querySelector('.edition').textContent=(gameMode==='free'?'自由 · ':'闯关 · ')+ropeCount+' 根绳子';
+root.querySelector('#mode-label').textContent=gameMode==='free'?'自由模式':'八根闯关';
+root.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===gameMode)));
+root.querySelector('#free-tools').hidden=gameMode!=='free';root.querySelector('#timing-options').hidden=gameMode==='free';
+root.querySelector('#timer').hidden=gameMode==='free'||!timed;root.querySelector('#records').hidden=gameMode==='free';
+root.querySelector('#timed').setAttribute('aria-pressed',String(timed));root.querySelector('#untimed').setAttribute('aria-pressed',String(!timed));
+for(const id of ['timed','untimed'])root.querySelector('#'+id).disabled=generating||played;
+root.querySelector('#add-rope').disabled=generating||ropeCount>=8;root.querySelector('#remove-rope').disabled=generating||ropeCount<=1;
+root.querySelector('#help').innerHTML='按住绳头直接拖动，靠近亮起的空孔松手吸附<br>'+(gameMode==='free'?'解开的绳子会保留 · 删除时移除最后添加的一根':'解开的绳子自动退场 · 动过的棋局会自动保存');
+updateSlots();canvas.setAttribute('aria-label',ropeCount+'根绳子的解缠棋盘，按住彩色绳头拖至灰色空孔。');
 }
+function storageRead(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}}
+function removeSave(){try{localStorage.removeItem(SAVE_PREFIX+gameMode)}catch{}}
+function timerValue(){return elapsed+(timerStarted?performance.now()-timerStarted:0)}
+function pauseTimer(){elapsed=timerValue();timerStarted=0}
+function resumeTimer(){if(played&&timed&&gameMode==='challenge'&&!won&&!generating&&!document.hidden&&!timerStarted)timerStarted=performance.now()}
+function formatTime(ms){const tenths=Math.floor(ms/100),m=Math.floor(tenths/600),sec=Math.floor(tenths/10)%60;return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')+'.'+tenths%10}
+function markPlayed(){if(!played){played=true;resumeTimer();updateMode()}}
+function saveProgress(){if(!played||won||generating||!opening)return;try{localStorage.setItem(SAVE_PREFIX+gameMode,JSON.stringify({version:2,mode:gameMode,timed,played,assisted,elapsed:timerValue(),opening,state:pointer?pointer.snapshot:returning?returning.to:snapshot(),history:history.slice(-30)}))}catch{}}
+function validState(s){return s&&Number.isInteger(s.count)&&s.count>=1&&s.count<=8&&Array.isArray(s.ropes)&&s.ropes.length===s.count&&Number.isFinite(s.moves)&&s.ropes.every(r=>Array.isArray(r.ends)&&r.ends.length===2&&r.ends.every(i=>Number.isInteger(i)&&i>=0&&i<24)&&Number.isFinite(r.rest)&&r.p?.length===49&&r.p.every(p=>['x','y','z','ox','oy','oz'].every(k=>Number.isFinite(p[k]))))&&new Set(s.ropes.filter(r=>!r.cleared).flatMap(r=>r.ends)).size===s.ropes.filter(r=>!r.cleared).length*2}
+function loadProgress(){const s=storageRead(SAVE_PREFIX+gameMode,null);if(!s||s.version!==2||s.mode!==gameMode||!s.played||!validState(s.state)||!validState(s.opening)||s.state.ropes.every(r=>r.cleared)||!Number.isFinite(s.elapsed)||s.elapsed<0||(gameMode==='challenge'&&s.state.count!==8))return false;timed=!!s.timed;played=true;assisted=!!s.assisted;elapsed=s.elapsed;timerStarted=0;opening=s.opening;history=(Array.isArray(s.history)?s.history:[]).filter(validState).slice(-30);restore(s.state);resumeTimer();update('已接着上次的进度 · 继续慢慢解');return true}
+function records(){const raw=storageRead(RECORD_KEY,[]);return (Array.isArray(raw)?raw:[]).filter(r=>r&&Number.isFinite(r.ms)&&r.ms>0&&typeof r.date==='string').sort((a,b)=>a.ms-b.ms).slice(0,5)}
+function renderRecords(){const list=root.querySelector('#record-list');list.replaceChildren();const best=records();if(!best.length){const li=document.createElement('li');li.textContent='还没有记录，解开一局就有啦。';list.append(li)}for(const r of best){const li=document.createElement('li'),row=document.createElement('div'),duration=document.createElement('strong'),date=document.createElement('time');row.className='record-row';duration.textContent=formatTime(r.ms);date.textContent=r.date;row.append(duration,date);li.append(row);list.append(li)}}
+function finishRound(){pauseTimer();root.querySelector('#timer').textContent=formatTime(elapsed);removeSave();if(gameMode==='challenge'&&timed&&played&&!assisted&&!demoMode&&!recorded){recorded=true;const d=new Date(),date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');try{localStorage.setItem(RECORD_KEY,JSON.stringify([...records(),{ms:elapsed,date}].sort((a,b)=>a.ms-b.ms).slice(0,5)))}catch{}renderRecords()}}
+function freshRound(){pauseTimer();elapsed=0;root.querySelector('#timer').textContent=formatTime(0);played=false;assisted=false;recorded=false;returning=false;removeSave();won=false;demoMode=false;toast.className=''}
 function beginOpening(){
-const serial=++generationSerial;generating=true;drag=null;pointer=null;selected=null;
-for(const id of ['reset','shuffle','undo','demo','rope-mode'])root.querySelector('#'+id).disabled=true;
+freshRound();const serial=++generationSerial;generating=true;drag=null;pointer=null;selected=null;
+for(const id of ['reset','shuffle','undo','demo'])root.querySelector('#'+id).disabled=true;
 update('正在生成新的孔位、配对和绳结…');
 function batch(){if(serial!==generationSerial)return;
 for(let attempt=0;attempt<4;attempt++){
 const candidate=makeOpening();ropes=candidate.ropes;
-if(intersections()<ropeCount*3||minimumSeparation(ropes)<=5||ropeCrossings(false).some(n=>n===0))continue;
+if(ropeCount>1&&(intersections()<ropeCount*3||minimumSeparation(ropes)<=5||ropeCrossings(false).some(n=>n===0)))continue;
 for(let frame=0;frame<12;frame++)physics();
-if(intersections()<ropeCount*2||minimumSeparation(ropes)<=2.49||ropeCrossings(false).some(n=>n===0))continue;
+if(ropeCount>1&&(intersections()<ropeCount*2||minimumSeparation(ropes)<=2.49||ropeCrossings(false).some(n=>n===0)))continue;
 opening=candidate;history=[];guardStops=0;generating=false;
-for(const id of ['reset','shuffle','demo','rope-mode'])root.querySelector('#'+id).disabled=false;
+for(const id of ['reset','shuffle','demo'])root.querySelector('#'+id).disabled=false;
 updateMode();restore(opening);canvas.dataset.opening=JSON.stringify({word:candidate.word,ends:ropes.map(r=>r.ends)});canvas.dataset.initialCrossings=String(intersections());update('新棋局已就绪 · 按住绳头拖动');return;
 }
 // Continue in short batches; never fall back to a fixed or unvalidated layout.
@@ -87,7 +116,7 @@ setTimeout(batch,0);
 }
 batch();
 }
-function reset(){if(generating)return;if(!opening){beginOpening(true);return}history=[];guardStops=0;restore(opening)}
+function reset(){if(generating||pointer)return;if(!opening){beginOpening(true);return}freshRound();history=[];guardStops=0;restore(opening)}
 function update(message){counter.textContent=moves+' 步';undoBtn.disabled=generating||!history.length;status.innerHTML='<i class="dot"></i>'+(message||(drag?'拖到亮起的空孔，再松手':'按住绳头，拖到空孔'))}
 function fixed(k,i){return i===0||i===N}
 function targets(k){let r=ropes[k];for(let end=0;end<2;end++){const p=r.p[end?N:0],h=holes[r.ends[end]];let target=drag&&drag.k===k&&drag.end===end?drag.target:{x:h.x,y:h.y,z:HOLEZ};let dx=target.x-p.x,dy=target.y-p.y,dz=target.z-p.z,d=Math.hypot(dx,dy,dz),f=Math.min(1,4/(d||1));p.x+=dx*f;p.y+=dy*f;p.z+=dz*f;p.ox=p.x;p.oy=p.y;p.oz=p.z}}
@@ -235,53 +264,71 @@ surface.putImageData(image,0,0);
 let tubeRenderer=null;try{tubeRenderer=createTubeRenderer()}catch(err){console.warn('Tube rendering unavailable:',err.message)}
 canvas.dataset.renderer=tubeRenderer?'webgl-depth':'software-depth';if(!tubeRenderer)tubeRenderer=createSoftwareTubeRenderer();
 function coords(e){let rect=canvas.getBoundingClientRect();return{x:(e.clientX-rect.left)*600/rect.width,y:(e.clientY-rect.top)*600/rect.height}}
-function nearestEnd(pos){let best=null,min=43;for(let k=ropeCount-1;k>=0;k--)for(let end=0;end<2;end++){if(ropes[k].cleared)continue;let p=project(ropes[k].p[end?N:0]),d=Math.hypot(p.x-pos.x,p.y-pos.y);if(d<min){min=d;best={k,end}}}return best}
-function emptyAt(pos){let best=-1,min=47;holes.forEach((h,i)=>{if(ropes.some(r=>!r.cleared&&r.ends.includes(i)))return;let d=Math.hypot(h.x-pos.x,h.y-4-pos.y);if(d<min){best=i;min=d}});return best}
-function drop(sel,h,snap){if(h<0)return;history.push(snap);ropes[sel.k].ends[sel.end]=h;moves++;won=false;quiet=0;toast.className='';selected=null;update('绳子正在松开…')}
+function nearestEnd(pos){let best=null,min=51;for(let k=ropeCount-1;k>=0;k--)for(let end=0;end<2;end++){if(ropes[k].cleared)continue;let p=project(ropes[k].p[end?N:0]),d=Math.hypot(p.x-pos.x,p.y-pos.y);if(d<min){min=d;best={k,end}}}return best}
+function emptyAt(pos){let best=-1,min=60;holes.forEach((h,i)=>{if(ropes.some(r=>!r.cleared&&r.ends.includes(i)))return;let d=Math.hypot(h.x-pos.x,h.y-4-pos.y);if(d<min){best=i;min=d}});return best}
+function drop(sel,h,snap){if(h<0)return;history.push(snap);ropes[sel.k].ends[sel.end]=h;moves++;won=false;quiet=0;toast.className='';selected=null;saveProgress();update('绳子正在松开…')}
 function dragTarget(pos){return{x:Math.max(30,Math.min(570,pos.x-pointer.offset.x)),y:Math.max(30,Math.min(570,pos.y-pointer.offset.y+32*.52)),z:32}}
 canvas.addEventListener('pointerdown',e=>{
-if(generating||pointer)return;const pos=coords(e),hit=nearestEnd(pos);if(!hit)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);
+if(generating||pointer||returning||won)return;const pos=coords(e),hit=nearestEnd(pos);if(!hit)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);
 const endPos=project(ropes[hit.k].p[hit.end?N:0]);
 pointer={pos,snapshot:snapshot(),moved:false,id:e.pointerId,offset:{x:pos.x-endPos.x,y:pos.y-endPos.y}};
 selected=hit;drag={...hit,target:dragTarget(pos)};canvas.style.cursor='grabbing';update();
 });
 canvas.addEventListener('pointermove',e=>{
 if(!pointer||pointer.id!==e.pointerId)return;e.preventDefault();const pos=coords(e);
-if(Math.hypot(pos.x-pointer.pos.x,pos.y-pointer.pos.y)>3)pointer.moved=true;
+if(Math.hypot(pos.x-pointer.pos.x,pos.y-pointer.pos.y)>3){pointer.moved=true;markPlayed()}
 drag.target=dragTarget(pos);hoverHole=emptyAt(project(drag.target));
 });
+function returnTo(snap,moved){if(!moved){restore(snap);return}returning={start:performance.now(),from:snapshot(),to:snap};quiet=0}
+function animateReturn(now){const t=Math.min(1,(now-returning.start)/320),ease=t*t*(3-2*t);for(let k=0;k<ropeCount;k++)for(let i=0;i<=N;i++){const p=ropes[k].p[i],a=returning.from.ropes[k].p[i],b=returning.to.ropes[k].p[i];for(const axis of ['x','y','z'])p[axis]=a[axis]+(b[axis]-a[axis])*ease;p.ox=p.x;p.oy=p.y;p.oz=p.z}if(t>=1){const snap=returning.to;restore(snap);saveProgress()}}
 function endPointer(e,cancel=false){
 if(!pointer||e.pointerId!==pointer.id)return;e.preventDefault();const old=pointer,sel=selected,pos=coords(e),target=dragTarget(pos),dest=emptyAt(project(target));
 pointer=null;drag=null;selected=null;hoverHole=-1;canvas.style.cursor='grab';
 if(!cancel&&old.moved&&dest>=0){drop(sel,dest,old.snapshot);update('松手吸附，绳子正在收紧')}
-else{restore(old.snapshot);update(old.moved?'没放进空孔，已回到原位':'按住绳头拖动，松手放入空孔')}
+else{returnTo(old.snapshot,old.moved);update(old.moved?'没放进空孔，绳头正在回位':'按住绳头拖动，松手放入空孔')}
+saveProgress();
 if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);
 }
 canvas.addEventListener('pointerup',e=>endPointer(e));canvas.addEventListener('pointercancel',e=>endPointer(e,true));
-canvas.addEventListener('lostpointercapture',e=>{if(pointer&&e.pointerId===pointer.id){const old=pointer;pointer=null;drag=null;selected=null;restore(old.snapshot);canvas.style.cursor='grab'}});
+canvas.addEventListener('lostpointercapture',e=>{if(pointer&&e.pointerId===pointer.id){const old=pointer;pointer=null;drag=null;selected=null;hoverHole=-1;returnTo(old.snapshot,old.moved);saveProgress();canvas.style.cursor='grab'}});
 canvas.style.cursor='grab';
-root.querySelector('#rope-mode').onchange=e=>{ropeCount=Number(e.target.value);N=ropeCount===3?36:ropeCount===5?40:48;opening=null;beginOpening(true)};root.querySelector('#reset').onclick=reset;root.querySelector('#shuffle').onclick=()=>beginOpening(true);undoBtn.onclick=()=>{if(history.length)restore(history.pop())};root.querySelector('#demo').onclick=()=>{history.push(snapshot());demoMode=true;selected=null;drag=null;for(let k=0;k<ropeCount;k++){const r=ropes[k];r.cleared=false;r.freeSince=null;r.ends=[k*2,k*2+1];const a=holes[r.ends[0]],b=holes[r.ends[1]];r.rest=Math.hypot(a.x-b.x,a.y-b.y)/N*1.015;for(let i=0;i<=N;i++){let t=i/N;r.p[i]=point(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,10)}}won=false;toast.textContent='解开的绳子会自动退场';toast.className='show';update('效果展示 · 可撤销回到刚才')};
+root.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>{const next=button.dataset.mode;root.querySelector('#mode-picker').open=false;if(next===gameMode||generating||pointer||returning)return;pauseTimer();saveProgress();gameMode=next;opening=null;history=[];played=false;elapsed=0;assisted=false;won=false;ropeCount=next==='challenge'?8:5;N=48;if(!loadProgress()){updateMode();beginOpening()}});
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('#mode-picker'))root.querySelector('#mode-picker').open=false});document.addEventListener('keydown',e=>{if(e.key==='Escape')root.querySelector('#mode-picker').open=false});
+for(const [id,value]of [['timed',true],['untimed',false]])root.querySelector('#'+id).onclick=()=>{if(played||generating)return;timed=value;updateMode()};
+function makeExtraRope(){
+const empty=holes.map((_,i)=>i).filter(i=>!ropes.some(r=>r.ends.includes(i))),pairs=[];
+for(let i=0;i<empty.length;i++)for(let j=i+1;j<empty.length;j++){const a=empty[i],b=empty[j];pairs.push({a,b,d:Math.hypot(holes[a].x-holes[b].x,holes[a].y-holes[b].y)})}pairs.sort((a,b)=>a.d-b.d);
+const ceiling=Math.max(80,...ropes.flatMap(r=>r.p.map(p=>p.z)))+50;
+for(const {a,b}of pairs)for(const height of [80,160,ceiling]){const A=holes[a],B=holes[b],p=[];for(let i=0;i<=N;i++){const t=i/N;p.push(point(A.x+(B.x-A.x)*t,A.y+(B.y-A.y)*t,HOLEZ+Math.sin(t*Math.PI)*height))}
+let safe=true;outer:for(const r of ropes)for(let i=0;i<N;i++)for(let j=0;j<N;j++)if(segmentDistance(p[i],p[i+1],r.p[j],r.p[j+1])<SEP+2){safe=false;break outer}if(!safe)continue;
+let length=0;for(let i=1;i<=N;i++)length+=Math.hypot(p[i].x-p[i-1].x,p[i].y-p[i-1].y,p[i].z-p[i-1].z);return{ends:[a,b],p,rest:length/N,color:colors[ropeCount],cleared:false,freeSince:null};
+}return null;
+}
+function changeRope(delta){if(generating||pointer||returning||gameMode!=='free'||ropeCount+delta<1||ropeCount+delta>8)return;const extra=delta>0?makeExtraRope():null;if(delta>0&&!extra){update('孔位附近太拥挤，先挪开一个绳头再添加');return}history.push(snapshot());if(delta<0){ropes.pop();ropeCount--}else{ropes.push(extra);ropeCount++}moves++;markPlayed();updateMode();saveProgress();update(delta>0?'已添加一根绳子':'已删除最后一根绳子')}
+root.querySelector('#add-rope').onclick=()=>changeRope(1);root.querySelector('#remove-rope').onclick=()=>changeRope(-1);
+root.querySelector('#reset').onclick=reset;root.querySelector('#shuffle').onclick=()=>{if(!pointer)beginOpening(true)};undoBtn.onclick=()=>{if(history.length&&!pointer){pauseTimer();restore(history.pop());resumeTimer();saveProgress()}};root.querySelector('#demo').onclick=()=>{if(generating||pointer||returning)return;history.push(snapshot());assisted=true;demoMode=true;selected=null;drag=null;for(let k=0;k<ropeCount;k++){const r=ropes[k];r.cleared=false;r.freeSince=null;r.ends=[k*2,k*2+1];const a=holes[r.ends[0]],b=holes[r.ends[1]];r.rest=Math.hypot(a.x-b.x,a.y-b.y)/N*1.015;for(let i=0;i<=N;i++){let t=i/N;r.p[i]=point(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,10)}}won=false;toast.textContent=gameMode==='free'?'解开了，绳子会留在棋盘上':'解开的绳子会自动退场';toast.className='show';saveProgress();update('效果展示 · 可撤销回到刚才')};
 function ropeCrossings(includeSelf=true){const counts=Array(ropeCount).fill(0);for(const [A,B]of nearbyPairs(ropes,null,includeSelf)){
 const a=A.a,b=A.b,c=B.a,d=B.b,dx=b.x-a.x,dy=b.y-a.y,ex=d.x-c.x,ey=d.y-c.y,den=dx*ey-dy*ex;if(Math.abs(den)<1e-8)continue;
 const x=c.x-a.x,y=c.y-a.y,t=(x*ey-y*ex)/den,u=(x*dy-y*dx)/den;if(t>=-1e-7&&t<=1+1e-7&&u>=-1e-7&&u<=1+1e-7){counts[A.k]++;if(B.k!==A.k)counts[B.k]++}
 }return counts}
 function intersections(){return ropeCrossings(false).reduce((a,b)=>a+b,0)/2}
 function checkCleared(now){
-if(drag||pointer||(!moves&&!demoMode)||won){for(const r of ropes)r.freeSince=null;return}
+if(gameMode==='free'||returning||drag||pointer||(!moves&&!demoMode)||won){for(const r of ropes)r.freeSince=null;return}
 const counts=ropeCrossings();let removed=0;
 for(let k=0;k<ropeCount;k++){const r=ropes[k];if(r.cleared)continue;if(counts[k]){r.freeSince=null;continue}if(r.freeSince===null||r.freeSince===undefined)r.freeSince=now;if(now-r.freeSince>=650){r.cleared=true;r.freeSince=null;removed++}}
 if(!removed)return;updateSlots();
-if(ropes.every(r=>r.cleared)){won=true;toast.textContent='全部解开，棋盘清空！';toast.className='show';update('全部 '+ropeCount+' 根绳子都解开了')}
-else update('解开的绳子已退场，继续解下一根');
+if(ropes.every(r=>r.cleared)){won=true;finishRound();toast.textContent='全部解开，棋盘清空！'+(timed&&!assisted?' '+formatTime(elapsed):'');toast.className='show';update('全部 '+ropeCount+' 根绳子都解开了')}
+else{saveProgress();update('解开的绳子已退场，继续解下一根')};
 }
 let visible=true,rafId=0,prev=0,frames=0,lastHidden=0;
 new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(visible&&!document.hidden)startLoop()},{rootMargin:'100px'}).observe(root);
 function startLoop(){if(rafId||document.hidden||!visible)return;prev=0;rafId=requestAnimationFrame(loop)}
 function stopLoop(){if(rafId){cancelAnimationFrame(rafId);rafId=0}prev=0}
-document.addEventListener('visibilitychange',()=>{if(document.hidden){lastHidden=performance.now();stopLoop()}else{const hiddenFor=performance.now()-lastHidden;if(hiddenFor>120){for(const r of ropes)for(const p of r.p){p.ox=p.x;p.oy=p.y;p.oz=p.z}}startLoop()}});
-window.addEventListener('pagehide',stopLoop,{passive:true});window.addEventListener('pageshow',startLoop,{passive:true});
-function loop(t){rafId=0;if(document.hidden||!visible)return;if(!generating&&t-prev>16.7){const started=performance.now();physics();if(frames%8===0)checkCleared(t);draw();if(frames%60===0)canvas.dataset.frameMs=(performance.now()-started).toFixed(1);prev=t;frames++}rafId=requestAnimationFrame(loop)}reset();startLoop();
+document.addEventListener('visibilitychange',()=>{if(document.hidden){lastHidden=performance.now();pauseTimer();saveProgress();stopLoop()}else{const hiddenFor=performance.now()-lastHidden;if(hiddenFor>120){for(const r of ropes)for(const p of r.p){p.ox=p.x;p.oy=p.y;p.oz=p.z}}resumeTimer();startLoop()}});
+window.addEventListener('pagehide',()=>{pauseTimer();saveProgress();stopLoop()},{passive:true});window.addEventListener('pageshow',()=>{resumeTimer();startLoop()},{passive:true});setInterval(()=>{root.querySelector('#timer').textContent=formatTime(timerValue());saveProgress()},1000);
+function loop(t){rafId=0;if(document.hidden||!visible)return;if(!generating&&t-prev>16.7){const started=performance.now();if(returning)animateReturn(t);else physics();if(frames%8===0)checkCleared(t);draw();if(frames%60===0)canvas.dataset.frameMs=(performance.now()-started).toFixed(1);prev=t;frames++}rafId=requestAnimationFrame(loop)}renderRecords();if(!loadProgress()){updateMode();reset()}startLoop();
 window.ropeGame={snapshot,reset,intersections,ropeCrossings,checkCleared,makeOpening,physics,minimumSeparation,motionFraction,get guardStops(){return guardStops},get holes(){return holes},get ropes(){return ropes},get moves(){return moves},get selected(){return selected}};
 })();
 </script></body></html>
+
 
